@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starter Kit Playground</title>
+<meta name="description" content="Try the Project Starter Kit in your browser: simulate the pipeline, check a task's lane, build a spec file, and track project setup.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #eef4fa;
+  --grid: rgba(30, 90, 150, 0.08);
+  --surface: #ffffff;
+  --surface-2: #e3edf7;
+  --ink: #0d2236;
+  --muted: #4b6278;
+  --line: #9cb7cf;
+  --line-strong: #1d5f96;
+  --accent: #1d5f96;
+  --accent-ink: #ffffff;
+  --gate: #a35400;
+  --gate-soft: #fbe9d4;
+  --opus: #6236b0;
+  --opus-soft: #ece4fa;
+  --sonnet: #0f6b52;
+  --sonnet-soft: #d8f1e8;
+  --ok: #0f6b52;
+  --bad: #b3261e;
+  --bad-soft: #fbe3e1;
+  --code-bg: #e3edf7;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0c1a2b;
+    --grid: rgba(143, 208, 255, 0.07);
+    --surface: #10233a;
+    --surface-2: #142c48;
+    --ink: #e3eef8;
+    --muted: #a9bfd4;
+    --line: #2f4d6b;
+    --line-strong: #8fd0ff;
+    --accent: #8fd0ff;
+    --accent-ink: #0c1a2b;
+    --gate: #ffb86b;
+    --gate-soft: #3a2a17;
+    --opus: #c7a6ff;
+    --opus-soft: #2a2148;
+    --sonnet: #7fe0bf;
+    --sonnet-soft: #143a31;
+    --ok: #7fe0bf;
+    --bad: #ff8f8f;
+    --bad-soft: #3d1c20;
+    --code-bg: #142c48;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--ink);
+  font: 16px/1.55 var(--sans);
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; overflow-wrap: anywhere; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 32px; } }
+.muted { color: var(--muted); }
+p { margin: 0 0 12px; }
+h1 { font-size: clamp(1.9rem, 6vw, 3.1rem); line-height: 1.08; letter-spacing: -0.03em; margin: 0 0 12px; }
+h2 { font-size: 1.35rem; letter-spacing: -0.01em; margin: 0 0 6px; line-height: 1.25; }
+h3 { font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 10px; }
+
+.topbar { border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg) 88%, transparent); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(6px); }
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; }
+.brand { font-family: var(--mono); font-size: 14px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.topnav { display: flex; gap: 4px; font-family: var(--mono); font-size: 14px; }
+.topnav a { text-decoration: none; color: var(--ink); padding: 10px; border-radius: 4px; }
+.topnav a:hover { background: var(--surface-2); }
+.topnav a[aria-current="page"] { color: var(--accent); }
+@media (max-width: 480px) { .topnav .hide-sm { display: none; } }
+@media (max-width: 380px) { .hide-xs { display: none; } .topnav a { padding: 10px 7px; } }
+
+.intro { padding: 40px 0 20px; }
+.kicker { font: 13px var(--mono); color: var(--gate); margin: 0 0 12px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.tab { font: 600 14px var(--mono); background: transparent; color: var(--muted); border: 1px solid transparent; border-bottom: 0; border-radius: 4px 4px 0 0; padding: 12px 14px; min-height: 44px; cursor: pointer; white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--accent); background: var(--surface); border-color: var(--line); margin-bottom: -1px; }
+.tabpanel { padding: 24px 0 8px; }
+.tabpanel[hidden] { display: none; }
+.lead { max-width: 46em; color: var(--muted); margin-bottom: 18px; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; }
+.dashed { border-style: dashed; border-color: var(--line-strong); }
+.grid2 { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 880px) { .grid2 { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; } }
+.stack { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+
+/* Controls */
+button.btn, a.btn { font: 600 15px var(--sans); min-height: 44px; padding: 10px 16px; border-radius: 4px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; text-align: left; }
+button.btn.primary { background: var(--accent); color: var(--accent-ink); }
+button.btn.danger { border-color: var(--bad); color: var(--bad); }
+button.btn.ghost { border-color: var(--line); color: var(--ink); }
+button.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+button.btn:not(:disabled):hover { filter: brightness(1.08); }
+.choices { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; min-height: 44px; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
+.check small { display: block; color: var(--muted); font-size: 0.85rem; }
+.check.disabled { opacity: 0.5; cursor: not-allowed; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { padding: 0; margin-bottom: 6px; font: 600 12px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.field { display: grid; gap: 6px; margin-bottom: 14px; }
+.field label, .lbl { font-weight: 600; font-size: 0.92rem; }
+.hint { font-size: 0.85rem; color: var(--muted); }
+input[type="text"], input[type="number"], select, textarea {
+  font: 15px var(--sans); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; min-height: 44px; width: 100%;
+}
+textarea { min-height: 84px; resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+.row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg label { display: flex; align-items: center; gap: 8px; padding: 0 14px; min-height: 44px; cursor: pointer; font-size: 0.95rem; border-right: 1px solid var(--line); }
+.seg label:last-child { border-right: 0; }
+.seg input { accent-color: var(--accent); }
+
+.pill { display: inline-block; font: 600 11.5px var(--mono); padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+.pill.gate { background: var(--gate-soft); color: var(--gate); }
+.pill.opus { background: var(--opus-soft); color: var(--opus); }
+.pill.sonnet { background: var(--sonnet-soft); color: var(--sonnet); }
+.pill.main { background: var(--surface-2); color: var(--accent); }
+.pill.owner { background: var(--gate-soft); color: var(--gate); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+
+/* Simulator */
+.track { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.track li { text-align: center; font: 11px var(--mono); color: var(--muted); }
+.track .box { display: grid; place-items: center; height: 40px; border: 1px solid var(--line); border-radius: 4px; font: 700 15px var(--mono); color: var(--muted); background: var(--surface); margin-bottom: 4px; }
+.track li.gate .box { border-color: color-mix(in srgb, var(--gate) 55%, transparent); }
+.track li.done .box { background: var(--surface-2); color: var(--ink); border-color: var(--line-strong); }
+.track li.skip .box { border-style: dashed; text-decoration: line-through; opacity: 0.6; }
+.track li.now .box { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.track li.now { color: var(--accent); font-weight: 700; }
+.track .nm { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) { .track .nm { display: none; } }
+.stepcard .who { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.stepcard h2 { margin-bottom: 8px; }
+.stepcard p { color: var(--muted); }
+.toggles { margin-bottom: 10px; }
+.specmini { list-style: none; margin: 0; padding: 0; font: 13px var(--mono); }
+.specmini li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.specmini li:last-child { border-bottom: 0; }
+.st { white-space: nowrap; }
+.st.empty { color: var(--muted); }
+.st.written { color: var(--accent); }
+.st.approved { color: var(--ok); }
+.st.na { color: var(--muted); text-decoration: line-through; }
+.st.stale { color: var(--gate); }
+.log { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; font-size: 0.92rem; }
+.log li { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.log li:last-child { border-bottom: 0; }
+.log .t { font: 11px var(--mono); color: var(--muted); padding-top: 3px; }
+.log .actor { margin-right: 6px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+.stat { border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; }
+.stat b { display: block; font: 700 22px var(--mono); }
+.stat span { font-size: 0.85rem; color: var(--muted); }
+
+/* Lane */
+.term { background: #071320; color: #a9bfd4; border-radius: 6px; padding: 16px; font: 13px/1.8 var(--mono); overflow-x: auto; white-space: pre; }
+.term .ok { color: #7fe0bf; } .term .no { color: #ff8f8f; } .term .g { color: #ffb86b; } .term .c { color: #5f7891; } .term .o { color: #c7a6ff; }
+.verdict { font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+.verdict.small { color: var(--ok); }
+.verdict.full { color: var(--accent); }
+ul.reasons { margin: 8px 0 0; padding-left: 18px; }
+ul.reasons li { margin-bottom: 4px; }
+.flag { margin-top: 12px; padding: 10px 12px; border-radius: 4px; background: var(--gate-soft); color: var(--ink); font-size: 0.92rem; }
+.flag b { color: var(--gate); }
+.chain { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.chain .arrow { color: var(--muted); font-family: var(--mono); }
+
+/* Spec builder */
+.acrow { border: 1px solid var(--line); border-radius: 4px; padding: 12px; margin-bottom: 10px; display: grid; gap: 8px; }
+.acrow .head { display: flex; justify-content: space-between; align-items: center; font: 600 13px var(--mono); }
+pre.out { margin: 0; background: #071320; color: #d6e4f0; border-radius: 6px; padding: 16px; font: 12.5px/1.6 var(--mono); overflow: auto; max-height: 640px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.outbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.outbar code { font-size: 12.5px; }
+.readiness { list-style: none; margin: 10px 0 0; padding: 0; font-size: 0.92rem; }
+.readiness li { padding: 3px 0; }
+.readiness .y { color: var(--ok); font-family: var(--mono); }
+.readiness .n { color: var(--bad); font-family: var(--mono); }
+.status-msg { font: 13px var(--mono); color: var(--ok); min-height: 1.2em; }
+
+/* Setup */
+.progress { height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin: 8px 0 4px; }
+.progress div { height: 100%; background: var(--accent); width: 0; transition: width 0.25s ease; }
+@media (prefers-reduced-motion: reduce) { .progress div { transition: none; } }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+th { font: 600 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+tr:last-child td { border-bottom: 0; }
+td code { overflow-wrap: anywhere; }
+.table-wrap { overflow-x: auto; }
+.keep { color: var(--ok); font: 600 12px var(--mono); }
+.del { color: var(--bad); font: 600 12px var(--mono); }
+.opt { color: var(--gate); font: 600 12px var(--mono); }
+ol.todo { list-style: none; margin: 0; padding: 0; }
+ol.todo li { border-bottom: 1px solid var(--line); }
+ol.todo li:last-child { border-bottom: 0; }
+ol.todo li.na { opacity: 0.5; }
+ol.todo .check span s { color: var(--muted); }
+
+footer { margin-top: 56px; border-top: 1px solid var(--line); padding: 22px 0 40px; font: 13px var(--mono); color: var(--muted); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="project-starter-kit home"><span class="hide-xs">project-</span>starter-kit</a>
+    <nav class="topnav" aria-label="Main">
+      <a href="./">guide</a>
+      <a href="playground.html" aria-current="page">playground</a>
+      <a class="hide-sm" href="https://github.com/Eugenelcc/project-starter-kit">github ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <p class="kicker">// playground — runs in your browser, sends nothing anywhere</p>
+    <h1>Play with the process</h1>
+    <p class="muted" style="max-width:44em">Four small tools built from the kit's own rules in <a href="https://github.com/Eugenelcc/project-starter-kit/blob/main/WORKFLOW.md">WORKFLOW.md</a>. Try the pipeline, check a task, draft a spec file, or track your project setup.</p>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Playground tools">
+    <button class="tab" role="tab" id="tab-simulator" aria-controls="simulator" aria-selected="true">01 · pipeline simulator</button>
+    <button class="tab" role="tab" id="tab-lane" aria-controls="lane" aria-selected="false" tabindex="-1">02 · which lane?</button>
+    <button class="tab" role="tab" id="tab-spec" aria-controls="spec" aria-selected="false" tabindex="-1">03 · spec file builder</button>
+    <button class="tab" role="tab" id="tab-setup" aria-controls="setup" aria-selected="false" tabindex="-1">04 · setup checklist</button>
+  </div>
+
+  <!-- 01 SIMULATOR -->
+  <section class="tabpanel" id="simulator" role="tabpanel" aria-labelledby="tab-simulator">
+    <p class="lead">Walk one task from idea to Done. You play the owner: approve at the ✋ gates, or push back. Flip the switches before you start to see how a risky item or a small fix changes the route.</p>
+    <ol class="track" id="sim-track" aria-label="Pipeline progress"></ol>
+    <div class="grid2">
+      <div class="stack">
+        <div class="panel dashed stepcard" id="sim-card" aria-live="polite"></div>
+        <div class="panel">
+          <h3>Event log</h3>
+          <ol class="log" id="sim-log"></ol>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="panel">
+          <h3 id="sim-file-name">docs/specs/B-042-….md</h3>
+          <ul class="specmini" id="sim-spec"></ul>
+        </div>
+        <div class="panel">
+          <h3>Legend</h3>
+          <div class="chain"><span class="pill main">main session</span><span class="pill owner">you · owner</span><span class="pill opus">opus agent</span><span class="pill sonnet">sonnet agent</span></div>
+          <p class="muted" style="margin:10px 0 0;font-size:0.9rem">Agents never talk to you. Every handoff goes through the spec file panel.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 LANE -->
+  <section class="tabpanel" id="lane" role="tabpanel" aria-labelledby="tab-lane" hidden>
+    <p class="lead">Describe a change. The checker applies the small-fix rule and the second-opinion rule from WORKFLOW.md, and shows which stages, agents and gates it goes through.</p>
+    <div class="grid2">
+      <form class="panel" id="lane-form" onsubmit="return false">
+        <div class="field">
+          <label for="lane-kind">What kind of change is it?</label>
+          <select id="lane-kind">
+            <option value="feature">New feature or behaviour</option>
+            <option value="bug" selected>Contained bug fix</option>
+            <option value="docs">Docs or a typo</option>
+            <option value="refactor">Refactor</option>
+          </select>
+        </div>
+        <fieldset class="field">
+          <legend>Size</legend>
+          <div class="seg">
+            <label><input type="radio" name="lane-size" value="small" checked> ≤ 30 changed lines</label>
+            <label><input type="radio" name="lane-size" value="big"> more</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Does it…</legend>
+          <label class="check"><input type="checkbox" id="lane-schema"><span>change a database schema or add a migration?</span></label>
+          <label class="check"><input type="checkbox" id="lane-dep"><span>add or upgrade a dependency?</span></label>
+          <label class="check"><input type="checkbox" id="lane-api"><span>change an API's shape (request or response)?</span></label>
+          <label class="check"><input type="checkbox" id="lane-ext"><span>add or change an external service?</span></label>
+          <label class="check"><input type="checkbox" id="lane-money"><span>touch money or other maths that must be exact?</span></label>
+          <label class="check"><input type="checkbox" id="lane-auth"><span>touch auth, identity or permissions?</span></label>
+          <label class="check"><input type="checkbox" id="lane-delete"><span>delete user data?</span></label>
+          <label class="check"><input type="checkbox" id="lane-risk"><span>touch another high-risk area?<small>The list in your GUARDRAILS §8, e.g. dates and timezones, the input parser.</small></span></label>
+        </fieldset>
+      </form>
+      <div class="stack" aria-live="polite">
+        <div class="panel dashed" id="lane-result"></div>
+        <div class="term" id="lane-term" aria-hidden="true"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 SPEC -->
+  <section class="tabpanel" id="spec" role="tabpanel" aria-labelledby="tab-spec" hidden>
+    <p class="lead">Fill in the form and get a task file in the kit's format: <code>docs/specs/B-###-&lt;slug&gt;.md</code>, with your Requirements filled in and the later sections waiting for the agents. Your draft is kept in this browser only.</p>
+    <div class="grid2">
+      <form class="panel" id="spec-form" onsubmit="return false">
+        <div class="row">
+          <div class="field"><label for="sp-id">Backlog ID</label><input type="number" id="sp-id" min="1" max="999" value="42"><span class="hint">B-042</span></div>
+          <div class="field"><label for="sp-feature">Feature ID</label><input type="text" id="sp-feature" value="F8" placeholder="F8"></div>
+          <div class="field"><label for="sp-type">Branch type</label>
+            <select id="sp-type"><option>feat</option><option>fix</option><option>docs</option><option>refactor</option><option>test</option><option>chore</option><option>ci</option></select>
+          </div>
+        </div>
+        <div class="field"><label for="sp-title">Title</label><input type="text" id="sp-title" value="Export transactions as CSV"></div>
+        <div class="field"><label for="sp-slug">Slug</label><input type="text" id="sp-slug" placeholder="made from the title"><span class="hint">Leave empty to make it from the title.</span></div>
+        <div class="field"><label for="sp-problem">Problem</label><textarea id="sp-problem">Users can't get their data out to use in a spreadsheet.</textarea></div>
+        <fieldset class="field">
+          <legend>User story</legend>
+          <div class="row">
+            <div class="field" style="margin:0"><label for="sp-who">As…</label><input type="text" id="sp-who" value="a user"></div>
+            <div class="field" style="margin:0"><label for="sp-what">I want…</label><input type="text" id="sp-what" value="to download my transactions as a CSV file"></div>
+            <div class="field" style="margin:0"><label for="sp-why">so that…</label><input type="text" id="sp-why" value="I can analyse them in a spreadsheet"></div>
+          </div>
+        </fieldset>
+        <fieldset class="field">
+          <legend>Acceptance criteria (Given / When / Then)</legend>
+          <div id="sp-acs"></div>
+          <button type="button" class="btn ghost" id="sp-add-ac">+ Add a criterion</button>
+        </fieldset>
+        <div class="field"><label for="sp-edges">Edge cases (one per line)</label><textarea id="sp-edges">No transactions yet: the file has only the header row
+A note containing a comma or a quote</textarea></div>
+        <div class="field"><label for="sp-out">Out of scope (one per line)</label><textarea id="sp-out">Excel (.xlsx) format</textarea></div>
+        <div class="choices"><button type="button" class="btn danger" id="sp-reset">Reset to the example</button></div>
+      </form>
+      <div class="stack">
+        <div class="panel">
+          <div class="outbar">
+            <code id="sp-path">docs/specs/B-042-export-transactions-as-csv.md</code>
+            <div class="choices" style="margin:0">
+              <button type="button" class="btn primary" id="sp-copy">Copy</button>
+              <button type="button" class="btn" id="sp-download">Download</button>
+            </div>
+          </div>
+          <p class="status-msg" id="sp-msg" role="status"></p>
+          <pre class="out" id="sp-out-md" tabindex="0" aria-label="Generated spec file"></pre>
+        </div>
+        <div class="panel">
+          <h3>Ready to hand to spec-planner?</h3>
+          <p class="muted" style="font-size:0.9rem;margin:0">Branch: <code id="sp-branch"></code></p>
+          <ul class="readiness" id="sp-ready"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 SETUP -->
+  <section class="tabpanel" id="setup" role="tabpanel" aria-labelledby="tab-setup" hidden>
+    <p class="lead">Tell it what your project is like. It shows which kit files to keep, gives you the exact delete command, and tracks your setup steps. Ticks are saved in this browser only.</p>
+    <div class="grid2">
+      <div class="stack">
+        <fieldset class="panel">
+          <legend>Your project</legend>
+          <label class="check"><input type="checkbox" id="su-ui" checked><span>Has screens people look at<small>web app, mobile app, Mini App…</small></span></label>
+          <label class="check"><input type="checkbox" id="su-deploy" checked><span>Gets deployed somewhere<small>a server, a static host, an app store</small></span></label>
+          <label class="check"><input type="checkbox" id="su-data" checked><span>Stores user data<small>a database or files</small></span></label>
+        </fieldset>
+        <div class="panel">
+          <h3>Kit files</h3>
+          <div class="table-wrap"><table><thead><tr><th>File</th><th>Do</th><th>Why</th></tr></thead><tbody id="su-files"></tbody></table></div>
+          <p class="lbl" style="margin:14px 0 6px">Run this in your new repo</p>
+          <div class="term" id="su-cmd"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Setup steps</h3>
+        <p class="lbl" id="su-count" style="margin:0">0 of 0 done</p>
+        <div class="progress" aria-hidden="true"><div id="su-bar"></div></div>
+        <ol class="todo" id="su-steps"></ol>
+        <div class="choices"><button type="button" class="btn danger" id="su-clear">Clear my ticks</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="./">← back to the guide</a>
+    <a href="https://github.com/Eugenelcc/project-starter-kit">Eugenelcc/project-starter-kit</a>
+    <span>MIT License</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- small helpers ---------- */
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === "text") n.textContent = attrs[k];
+      else if (k === "cls") n.className = attrs[k];
+      else if (k.slice(0, 2) === "on") n.addEventListener(k.slice(2), attrs[k]);
+      else n.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c != null) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function store(key, val) { try { localStorage.setItem("psk:" + key, JSON.stringify(val)); } catch (e) {} }
+  function load(key, fallback) { try { var v = localStorage.getItem("psk:" + key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+  var MODEL = { "spec-planner": "opus", "challenger": "opus", "reviewer": "opus", "test-writer": "sonnet", "builder": "sonnet" };
+  function actorPill(a) {
+    if (a === "main") return el("span", { cls: "pill main", text: "main session" });
+    if (a === "owner") return el("span", { cls: "pill owner", text: "you · owner" });
+    if (a === "system") return el("span", { cls: "pill bad", text: "production" });
+    return el("span", { cls: "pill " + MODEL[a], text: a + " · " + MODEL[a] });
+  }
+
+  /* ---------- tabs ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function selectTab(id, focus) {
+    tabs.forEach(function (t) {
+      var on = t.getAttribute("aria-controls") === id;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      $(t.getAttribute("aria-controls")).hidden = !on;
+      if (on && focus) t.focus();
+    });
+    if (history.replaceState) history.replaceState(null, "", "#" + id);
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { selectTab(t.getAttribute("aria-controls")); });
+    t.addEventListener("keydown", function (e) {
+      var j = null;
+      if (e.key === "ArrowRight") j = (i + 1) % tabs.length;
+      if (e.key === "ArrowLeft") j = (i - 1 + tabs.length) % tabs.length;
+      if (e.key === "Home") j = 0;
+      if (e.key === "End") j = tabs.length - 1;
+      if (j !== null) { e.preventDefault(); selectTab(tabs[j].getAttribute("aria-controls"), true); }
+    });
+  });
+  function tabFromHash() {
+    var h = (location.hash || "").slice(1);
+    if (["simulator", "lane", "spec", "setup"].indexOf(h) >= 0) selectTab(h);
+  }
+  tabFromHash();
+  window.addEventListener("hashchange", tabFromHash);
+
+  /* =========================================================
+     01 · PIPELINE SIMULATOR
+     ========================================================= */
+  var STAGES = [
+    { n: 0, name: "Intake" }, { n: 1, name: "Reqs", gate: true }, { n: 2, name: "Plan", gate: true },
+    { n: 3, name: "Tests" }, { n: 4, name: "Build" }, { n: 5, name: "Review", gate: true },
+    { n: 6, name: "Release" }, { n: 7, name: "Close" }
+  ];
+  var SECTIONS = [
+    ["grill", "Grilling recap"], ["req", "Requirements"], ["plan", "Build plan"],
+    ["second", "Second opinion"], ["tests", "Test report"], ["notes", "Build notes"], ["review", "Review"]
+  ];
+  var LABEL = { empty: "— empty", written: "✎ written", approved: "✓ approved", na: "n/a", stale: "! needs re-approval", failing: "❌ failing (expected)", green: "✅ passing" };
+  var sim;
+
+  function simReset() {
+    sim = {
+      at: "setup", stage: 0, risky: false, small: false, fails: 0, round: 1, t: 0,
+      maxStage: -1, done: false, incident: false, gates: 0, runs: {}, title: "", id: "B-042",
+      sec: { grill: "empty", req: "empty", plan: "empty", second: "empty", tests: "empty", notes: "empty", review: "empty" },
+      log: []
+    };
+    $("sim-log").innerHTML = "";
+    simRender();
+  }
+  function log(actor, text) {
+    sim.t += 1;
+    var li = el("li", null, [el("span", { cls: "t", text: String(sim.t).padStart(2, "0") }), el("div", null, [actorPill(actor), document.createTextNode(" " + text)])]);
+    var list = $("sim-log");
+    list.appendChild(li);
+    list.scrollTop = list.scrollHeight;
+  }
+  function run(agent, text) { sim.runs[agent] = (sim.runs[agent] || 0) + 1; log(agent, text); }
+  function goStage(n) { sim.stage = n; if (n > sim.maxStage) sim.maxStage = n; }
+
+  function enterReqs() {
+    goStage(1); sim.at = "reqs";
+    run("spec-planner", "Reads the recap, GUARDRAILS and PRD, then writes Requirements: problem, user story, 3 acceptance criteria as Given / When / Then, edge cases, out of scope.");
+    sim.sec.req = "written";
+    if (sim.risky) { run("challenger", "Reads the spec and the real code without seeing your chat. Finds one missing edge case and suggests a simpler option, with pros and cons."); sim.sec.second = "written"; }
+  }
+  function enterPlan(replan) {
+    goStage(2); sim.at = "plan";
+    run("spec-planner", replan
+      ? "Re-plans from what the builder found: adjusts the files and the approach. The plan needs your approval again."
+      : "Writes the Build plan: files to change, data changes, a test for each criterion, risks, PR split.");
+    sim.sec.plan = replan ? "stale" : "written";
+    if (sim.risky) { run("challenger", "Checks the plan: is the migration backward-compatible with the running version? Writes its findings into Second opinion."); sim.sec.second = "written"; }
+  }
+  function enterTests() {
+    goStage(3); sim.at = "tests";
+    run("test-writer", "Writes one failing test per acceptance criterion, plus the edge cases. Runs the tests: all red.");
+    sim.sec.tests = "failing";
+  }
+  function enterBuild(note) {
+    goStage(4); sim.at = "build";
+    run("builder", note || "Implements exactly what the plan lists, then runs the full CI command.");
+  }
+  function enterReview() {
+    goStage(5); sim.at = "review";
+    run("reviewer", "Reads the diff against the spec and GUARDRAILS, reruns CI, and writes the Review section with a verdict.");
+    sim.sec.review = "written";
+  }
+  function toFull(reason) {
+    log("main", reason + " It no longer fits the small-fix lane, so it goes through the full pipeline.");
+    sim.small = false; sim.sec.grill = "empty"; sim.sec.req = "empty"; sim.sec.plan = "empty";
+    sim.sec.second = sim.risky ? "empty" : "na";
+    goStage(1); sim.at = "grill"; sim.round = 1;
+  }
+
+  var VIEWS = {
+    setup: function () {
+      return {
+        who: ["main"], title: "Set up the scenario",
+        body: "Pick the kind of task, then add it to the backlog. Each choice changes the route through the pipeline.",
+        toggles: true,
+        choices: [{ label: "Start: add the task to BACKLOG.md", kind: "primary", go: function () {
+          sim.title = sim.risky ? "Purge soft-deleted rows after 30 days" : sim.small ? "Fix the CSV export filename" : "Export transactions as CSV";
+          sim.id = "B-042";
+          log("main", "Intake: " + sim.id + " \"" + sim.title + "\" added to BACKLOG.md, mapped to one feature ID. Branch: " + (sim.small ? "fix" : "feat") + "/" + sim.id + "-….");
+          if (!sim.risky) sim.sec.second = "na";
+          if (sim.small) {
+            ["grill", "req", "plan"].forEach(function (k) { sim.sec[k] = "na"; });
+            log("main", "Small-fix lane: about 30 lines, no schema, dependency, API or high-risk change. Stages 1 and 2 are skipped; tests and review still run.");
+            enterTests();
+          } else { goStage(1); sim.at = "grill"; }
+        } }]
+      };
+    },
+    grill: function () {
+      return {
+        who: ["main", "owner"], title: "Grilling, round " + sim.round,
+        body: "Claude asks you up to 4 questions. Each starts with a plain scenario (\"You export on the 31st at 23:50…\"), then the detail, then options with pros and cons. Then it plays back a recap of what it understood.",
+        choices: [
+          { label: "Confirm the recap", kind: "primary", go: function () {
+            log("owner", "Confirms the recap after " + sim.round + " round" + (sim.round > 1 ? "s" : "") + ". Claude writes it into the Grilling recap section.");
+            sim.sec.grill = "approved"; enterReqs();
+          } },
+          { label: "Correct it: another round", go: function () {
+            log("owner", "Corrects one point in the recap. Claude doesn't fill the gap with a guess; it asks another round.");
+            sim.round += 1;
+          } }
+        ]
+      };
+    },
+    reqs: function () {
+      return {
+        who: ["owner"], gate: true, title: "✋ Gate 1: approve the Requirements?",
+        body: "Claude posts a summary of the Requirements" + (sim.risky ? " and the challenger's findings, as options with pros and cons" : "") + ". Nothing moves until you say \"approved\".",
+        choices: [
+          { label: "Approve", kind: "primary", go: function () {
+            sim.gates += 1; sim.sec.req = "approved";
+            log("owner", "Approved. Claude writes \"Requirements approved by owner, <date>\" at the top of the spec.");
+            enterPlan(false);
+          } },
+          { label: "Request changes", go: function () {
+            log("owner", "Asks for a change to one acceptance criterion.");
+            run("spec-planner", "Revises the Requirements and re-posts the summary.");
+          } }
+        ]
+      };
+    },
+    plan: function () {
+      return {
+        who: ["owner"], gate: true, title: "✋ Gate 2: approve the Build plan?",
+        body: "Approving this means the item meets the Definition of Ready: recap confirmed, criteria testable, a test named for each one, and no open questions.",
+        choices: [
+          { label: "Approve", kind: "primary", go: function () {
+            sim.gates += 1; sim.sec.plan = "approved";
+            log("owner", "Approved. Claude writes \"Build plan approved by owner, <date>\". Definition of Ready: met.");
+            if (sim.sec.tests === "empty") enterTests(); else enterBuild("Picks up the re-approved plan and continues against the same failing tests.");
+          } },
+          { label: "Request changes", go: function () {
+            log("owner", "Prefers a different approach to the data change.");
+            run("spec-planner", "Revises the Build plan and re-posts it.");
+          } }
+        ]
+      };
+    },
+    tests: function () {
+      return {
+        who: ["test-writer"], title: "Stage 3: tests, written first",
+        body: "The Test report lists each criterion with its test and \"❌ failing (expected)\". A test that passes before any code exists proves nothing.",
+        choices: [
+          { label: "All tests fail for the right reason", kind: "primary", go: function () {
+            log("main", "Tests committed. Every criterion has a red test.");
+            enterBuild();
+          } },
+          { label: "One test passes before the build", go: function () {
+            run("test-writer", "Flags it: a test that passes now proves nothing. Rewrites it so it checks the missing behaviour, and it goes red.");
+          } }
+        ]
+      };
+    },
+    build: function () {
+      return {
+        who: ["builder"], title: "Stage 4: build until green",
+        body: "Failed attempts at the same problem: " + sim.fails + " of 2. The builder never edits, skips or loosens a test to get green.",
+        choices: [
+          { label: "Tests go green", kind: "primary", go: function () {
+            sim.fails = 0; sim.sec.tests = "green"; sim.sec.notes = "written";
+            run("builder", "All checks pass. Updates the Test report to ✅ and writes Build notes: deviations \"none\", one side idea parked in BACKLOG → Later.");
+            enterReview();
+          } },
+          { label: "Tests still red", kind: "danger", go: function () {
+            sim.fails += 1;
+            if (sim.fails < 2) {
+              run("builder", "Attempt " + sim.fails + " failed. Reads the real output and tries once more.");
+            } else {
+              sim.fails = 0;
+              run("builder", "Second honest failed attempt: stops. Reports what failed (the real output), what it tried, and what the plan seems to be missing.");
+              if (sim.small) { toFull("The fix turned out bigger than it looked."); return; }
+              log("main", "Escalates: hands back to spec-planner (Opus) to re-plan. A changed plan needs your approval again.");
+              enterPlan(true);
+            }
+          } }
+        ]
+      };
+    },
+    review: function () {
+      return {
+        who: ["reviewer"], title: "Stage 5a: the reviewer's verdict",
+        body: "The reviewer checks each acceptance criterion has a real test, runs through the guardrails, and looks for silent bugs. Pick the verdict it gives.",
+        choices: [
+          { label: "Ready for owner", kind: "primary", go: function () { sim.sec.review = "approved"; log("reviewer", "Verdict: ready for owner. No blocking findings."); sim.at = "merge"; } },
+          { label: "Back to build", go: function () { log("reviewer", "Verdict: back to build. One unhandled error path, with a concrete failure scenario."); sim.sec.review = "written"; enterBuild("Fixes the listed finding, adds a test for it, reruns CI."); } },
+          { label: "Back to plan", kind: "danger", go: function () {
+            log("reviewer", "Verdict: back to plan. A design flaw: the approach can't meet one criterion safely.");
+            if (sim.small) { toFull("The reviewer found a design problem."); return; }
+            enterPlan(true);
+          } }
+        ]
+      };
+    },
+    merge: function () {
+      return {
+        who: ["owner"], gate: true, title: "✋ Gate 3: your review and merge",
+        body: "You ask Claude for the PR. Its body carries the acceptance-criteria-to-tests table and the guardrail checklist. You test it on a non-production environment. Claude never merges.",
+        choices: [
+          { label: "Open the PR and merge it", kind: "primary", go: function () {
+            sim.gates += 1;
+            log("owner", "Asks for the PR. Claude opens it; CI is green; you review and merge.");
+            goStage(6); sim.at = "release";
+            log("main", "Merged to main. Deploying, then running the RUNBOOK smoke checks.");
+          } },
+          { label: "Request changes on the PR", go: function () {
+            log("owner", "Requests a change in the PR review.");
+            enterBuild("Makes the requested change on the same branch and reruns CI.");
+          } }
+        ]
+      };
+    },
+    release: function () {
+      return {
+        who: ["main"], title: "Stage 6: release and smoke test",
+        body: "The health check responds, and one real end-to-end action works. The change goes into CHANGELOG.md.",
+        choices: [
+          { label: "Smoke tests pass", kind: "primary", go: function () {
+            log("main", "Health check OK, one real action works. CHANGELOG updated.");
+            goStage(7); sim.at = "close";
+          } },
+          { label: "Production breaks", kind: "danger", go: function () {
+            sim.incident = true;
+            log("system", "Errors after the deploy.");
+            log("main", "Revert first, fix second: redeploys the last good build and confirms the health check is back.");
+            log("main", "Opens B-043 on a fix/ branch, with a test that would have caught the bug. Users were affected, so a blameless postmortem goes in docs/postmortems/.");
+            goStage(7); sim.at = "close";
+          } }
+        ]
+      };
+    },
+    close: function () {
+      return {
+        who: ["main"], title: "Stage 7: close",
+        body: sim.incident
+          ? "The original change was reverted, so B-042 is not Done yet. It goes back to Now, and B-043 carries the fix through the pipeline."
+          : "Definition of Done: docs and CHANGELOG updated in the same PR, high-risk areas tested, deployed and smoke-tested.",
+        choices: [{ label: sim.incident ? "Move B-042 back to Now" : "Move B-042 to Done", kind: "primary", go: function () {
+          log("main", sim.incident ? "B-042 back in BACKLOG → Now, linked to B-043 and the postmortem." : "B-042 moved to BACKLOG → Done with its PR number.");
+          sim.at = "done"; sim.done = true;
+        } }]
+      };
+    },
+    done: function () {
+      var agentRuns = 0; for (var k in sim.runs) agentRuns += sim.runs[k];
+      return {
+        who: ["main"], title: sim.incident ? "Finished, with an incident" : "Done",
+        body: sim.incident ? "Production was restored first; the fix is a new backlog item." : "That's the whole pipeline. Try again with different switches, or push back at a gate to see the loops.",
+        stats: [[sim.gates, "owner approvals"], [agentRuns, "agent runs"], [sim.t, "events"]],
+        choices: [{ label: "Run it again", kind: "primary", go: simReset }]
+      };
+    }
+  };
+
+  function simRender() {
+    var v = VIEWS[sim.at]();
+    // track
+    var track = $("sim-track"); track.innerHTML = "";
+    STAGES.forEach(function (s) {
+      var cls = [];
+      if (s.gate) cls.push("gate");
+      if (sim.at !== "setup" && s.n === sim.stage && !sim.done) cls.push("now");
+      else if (s.n <= sim.maxStage) cls.push("done");
+      if (sim.small && (s.n === 1 || s.n === 2) && sim.at !== "setup") cls.push("skip");
+      var li = el("li", { cls: cls.join(" ") }, [el("span", { cls: "box", text: String(s.n) }), el("span", { cls: "nm", text: s.name + (s.gate ? " ✋" : "") })]);
+      if (cls.indexOf("now") >= 0) li.setAttribute("aria-current", "step");
+      li.setAttribute("aria-label", "Stage " + s.n + " " + s.name + (cls.indexOf("skip") >= 0 ? ", skipped" : cls.indexOf("now") >= 0 ? ", current" : cls.indexOf("done") >= 0 ? ", passed" : ""));
+      track.appendChild(li);
+    });
+    // card
+    var card = $("sim-card"); card.innerHTML = "";
+    card.appendChild(el("div", { cls: "who" }, v.who.map(actorPill)));
+    card.appendChild(el("h2", { text: v.title }));
+    card.appendChild(el("p", { text: v.body }));
+    if (v.toggles) {
+      var risky = el("input", { type: "checkbox", id: "sim-risky" });
+      var small = el("input", { type: "checkbox", id: "sim-small" });
+      risky.checked = sim.risky; small.checked = sim.small; small.disabled = sim.risky; risky.disabled = sim.small;
+      risky.addEventListener("change", function () { sim.risky = risky.checked; simRender(); $("sim-risky").focus(); });
+      small.addEventListener("change", function () { sim.small = small.checked; simRender(); $("sim-small").focus(); });
+      card.appendChild(el("div", { cls: "toggles" }, [
+        el("label", { cls: "check" + (risky.disabled ? " disabled" : ""), "for": "sim-risky" }, [risky, el("span", null, ["Risky item", el("small", { text: "Touches a schema, money maths, auth, data deletion or a new external service. Adds the challenger's second opinion." })])]),
+        el("label", { cls: "check" + (small.disabled ? " disabled" : ""), "for": "sim-small" }, [small, el("span", null, ["Small fix", el("small", { text: "About 30 lines, no schema, dependency, API or high-risk change. Skips stages 1 and 2." })])])
+      ]));
+    }
+    if (v.stats) card.appendChild(el("div", { cls: "summary" }, v.stats.map(function (s) { return el("div", { cls: "stat" }, [el("b", { text: String(s[0]) }), el("span", { text: s[1] })]); })));
+    var ch = el("div", { cls: "choices" });
+    v.choices.forEach(function (c) {
+      ch.appendChild(el("button", { type: "button", cls: "btn " + (c.kind || ""), onclick: function () { c.go(); simRender(); var b = document.querySelector("#sim-card .choices .btn"); if (b) b.focus({ preventScroll: true }); } }, [c.label]));
+    });
+    card.appendChild(ch);
+    // spec file
+    $("sim-file-name").textContent = "docs/specs/" + sim.id + "-" + (sim.title ? sim.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : "…") + ".md";
+    var spec = $("sim-spec"); spec.innerHTML = "";
+    SECTIONS.forEach(function (s) {
+      var st = sim.sec[s[0]];
+      var cls = st === "failing" ? "written" : st === "green" ? "approved" : st;
+      spec.appendChild(el("li", null, [el("span", { text: "## " + s[1] }), el("span", { cls: "st " + cls, text: LABEL[st] })]));
+    });
+  }
+  simReset();
+
+  /* =========================================================
+     02 · WHICH LANE?
+     ========================================================= */
+  var laneIds = ["schema", "dep", "api", "ext", "money", "auth", "delete", "risk"];
+  function laneRender() {
+    var f = { kind: $("lane-kind").value, small: document.querySelector('input[name="lane-size"]:checked').value === "small" };
+    laneIds.forEach(function (k) { f[k] = $("lane-" + k).checked; });
+
+    var blockers = [];
+    if (!(f.kind === "bug" || f.kind === "docs")) blockers.push(f.kind === "feature" ? "It's a new feature, not a contained fix." : "A refactor isn't in the small-fix lane (only docs, typos and contained bug fixes are).");
+    if (!f.small) blockers.push("More than about 30 changed lines.");
+    if (f.schema) blockers.push("It changes a schema or migration.");
+    if (f.dep) blockers.push("It adds or upgrades a dependency.");
+    if (f.api) blockers.push("It changes an API's shape.");
+    if (f.ext) blockers.push("It adds or changes an external service.");
+    if (f.money) blockers.push("It touches money or exact maths (a high-risk area).");
+    if (f.auth) blockers.push("It touches auth or identity (a high-risk area).");
+    if (f.delete) blockers.push("It deletes user data (a high-risk area).");
+    if (f.risk) blockers.push("It touches a high-risk area from GUARDRAILS §8.");
+    var isSmall = blockers.length === 0;
+
+    var riskyWhy = [];
+    if (f.schema) riskyWhy.push("a schema or migration");
+    if (f.money) riskyWhy.push("money or exact maths");
+    if (f.auth) riskyWhy.push("auth or identity");
+    if (f.delete) riskyWhy.push("data deletion");
+    if (f.ext) riskyWhy.push("an external service");
+    var challenger = riskyWhy.length > 0;
+
+    var asks = [];
+    if (f.ext) asks.push(["ASK FIRST", "A new external service is an availability dependency and a data processor (GUARDRAILS §1). Claude stops and asks before planning."]);
+    if (f.delete) asks.push(["ASK FIRST", "Deleting or bulk-changing data needs an owner-approved plan (GUARDRAILS §2 and §10)."]);
+    if (f.schema) asks.push(["CHECK", "The migration must stay backward-compatible with the version that's running."]);
+
+    var box = $("lane-result"); box.innerHTML = "";
+    box.appendChild(el("h3", { text: "Verdict" }));
+    box.appendChild(el("p", { cls: "verdict " + (isSmall ? "small" : "full"), text: isSmall ? "Small-fix lane" : "Full pipeline" }));
+    box.appendChild(el("p", { cls: "muted", text: isSmall
+      ? "Skips Requirements and Build plan. Tests, build and review still run, and you still merge."
+      : "Grilling, Requirements and Build plan first, each approved by you, before any tests or code." }));
+    if (!isSmall) box.appendChild(el("ul", { cls: "reasons" }, blockers.map(function (b) { return el("li", { text: b }); })));
+
+    box.appendChild(el("h3", { text: "Who runs", style: "margin-top:16px" }));
+    var chain = isSmall ? ["test-writer", "builder", "reviewer"] : (challenger ? ["spec-planner", "challenger", "test-writer", "builder", "reviewer"] : ["spec-planner", "test-writer", "builder", "reviewer"]);
+    var c = el("div", { cls: "chain" });
+    chain.forEach(function (a, i) { if (i) c.appendChild(el("span", { cls: "arrow", "aria-hidden": "true", text: "→" })); c.appendChild(actorPill(a)); });
+    box.appendChild(c);
+    box.appendChild(el("p", { cls: "muted", style: "margin:12px 0 0", text: challenger
+      ? "Second opinion: required, because it touches " + riskyWhy.join(", ") + "."
+      : "Second opinion: not required. You can still ask for one." }));
+    box.appendChild(el("p", { cls: "muted", style: "margin:4px 0 0", text: "Your gates: " + (isSmall ? "1 (merge)" : "3 (requirements, plan, merge)") + "." }));
+    asks.forEach(function (a) { box.appendChild(el("div", { cls: "flag" }, [el("b", { text: a[0] + ": " }), a[1]])); });
+
+    var t = $("lane-term"); t.innerHTML = "";
+    function line(parts) { var d = el("div"); parts.forEach(function (p) { d.appendChild(typeof p === "string" ? document.createTextNode(p) : el("span", { cls: p[0], text: p[1] })); }); t.appendChild(d); }
+    line([["ok", "$"], " lane --check"]);
+    line(["small_fix:  ", isSmall ? ["ok", "true"] : ["no", "false"], isSmall ? "" : ["c", "  # " + blockers.length + " reason" + (blockers.length > 1 ? "s" : "")]]);
+    line(["stages:     ", isSmall ? "0 → 3 → 4 → 5 → 6 → 7" : "0 → 1 → 2 → 3 → 4 → 5 → 6 → 7"]);
+    line(["challenger: ", challenger ? ["ok", "required"] : ["c", "optional"]]);
+    line(["opus:       ", ["o", chain.filter(function (a) { return MODEL[a] === "opus"; }).join(", ")]]);
+    line(["sonnet:     ", ["ok", chain.filter(function (a) { return MODEL[a] === "sonnet"; }).join(", ")]]);
+    line(["gates:      ", ["g", (isSmall ? 1 : 3) + " × owner"]]);
+    if (asks.some(function (a) { return a[0] === "ASK FIRST"; })) line(["status:     ", ["g", "stop and ask the owner first"]]);
+  }
+  $("lane-form").addEventListener("input", laneRender);
+  $("lane-form").addEventListener("change", laneRender);
+  laneRender();
+
+  /* =========================================================
+     03 · SPEC FILE BUILDER
+     ========================================================= */
+  var SPEC_DEFAULT = {
+    id: 42, feature: "F8", type: "feat", title: "Export transactions as CSV", slug: "",
+    problem: "Users can't get their data out to use in a spreadsheet.",
+    who: "a user", what: "to download my transactions as a CSV file", why: "I can analyse them in a spreadsheet",
+    acs: [
+      { g: "I have 3 transactions this month", w: "I tap Export CSV", t: "I get a file with a header row and 3 rows" },
+      { g: "a note contains a comma", w: "I export", t: "the note is quoted so the columns stay aligned" }
+    ],
+    edges: "No transactions yet: the file has only the header row\nA note containing a comma or a quote",
+    out: "Excel (.xlsx) format"
+  };
+  var spec = load("spec", null) || JSON.parse(JSON.stringify(SPEC_DEFAULT));
+  var FIELDS = ["id", "feature", "type", "title", "slug", "problem", "who", "what", "why", "edges", "out"];
+  var FIELD_EL = { id: "sp-id", feature: "sp-feature", type: "sp-type", title: "sp-title", slug: "sp-slug", problem: "sp-problem", who: "sp-who", what: "sp-what", why: "sp-why", edges: "sp-edges", out: "sp-out" };
+
+  function slugify(s) { return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "untitled"; }
+  function bid() { var n = parseInt(spec.id, 10); if (!(n >= 1)) n = 1; if (n > 999) n = 999; return "B-" + String(n).padStart(3, "0"); }
+  function cell(s) { return (s || "").replace(/\|/g, "\\|").replace(/\s*\n\s*/g, " ").trim(); }
+  function lines(s) { return (s || "").split("\n").map(function (x) { return x.trim(); }).filter(Boolean); }
+
+  function specMd() {
+    var id = bid(), slug = spec.slug.trim() ? slugify(spec.slug) : slugify(spec.title);
+    var branch = spec.type + "/" + id + "-" + slug;
+    var md = [];
+    md.push("# " + id + " — " + (spec.title.trim() || "<title>"), "");
+    md.push("**Feature:** " + (spec.feature.trim() || "F#") + " · **Branch:** `" + branch + "` · **Status:** draft");
+    md.push("<!-- After each approval, Claude adds a line:", "     Requirements approved by owner, YYYY-MM-DD", "     Build plan approved by owner, YYYY-MM-DD -->", "");
+    md.push("Process: [`WORKFLOW.md`](../../WORKFLOW.md). **This one file is the handoff between agents:**", "each writes only its own section.", "", "---", "");
+    md.push("## Grilling recap (confirmed by owner, YYYY-MM-DD)", "<!-- Written by the main session after grilling the owner. -->", "",
+      "- **What we're building:**", "- **Decisions made:**", "- **Out of scope / parked:**", "- **Open risks:**", "", "---", "");
+    md.push("## Requirements — *what* (Stage 1)", "", "### Problem", (spec.problem.trim() || "<!-- What's wrong or missing, for whom. Cite the PRD feature ID. -->"), "");
+    md.push("### User stories", "- As " + (spec.who.trim() || "<who>") + ", I want " + (spec.what.trim() || "<what>") + ", so that " + (spec.why.trim() || "<why>") + ".", "");
+    md.push("### Acceptance criteria", "", "| # | Given | When | Then |", "|---|---|---|---|");
+    (spec.acs.length ? spec.acs : [{ g: "", w: "", t: "" }]).forEach(function (a, i) { md.push("| AC" + (i + 1) + " | " + cell(a.g) + " | " + cell(a.w) + " | " + cell(a.t) + " |"); });
+    md.push("", "### Edge cases");
+    var e = lines(spec.edges); (e.length ? e : [""]).forEach(function (x) { md.push("- " + x); });
+    md.push("", "### Out of scope");
+    var o = lines(spec.out); (o.length ? o : [""]).forEach(function (x) { md.push("- " + x); });
+    md.push("", "### Open questions for the owner", "- none", "", "---", "");
+    md.push("## Build plan — *how* (Stage 2)", "<!-- spec-planner fills this in after the Requirements are approved. -->", "",
+      "### Files", "| File | Change |", "|---|---|", "| | |", "",
+      "### Data", "<!-- Schema change? Backward-compatible with the running version? Or \"none\". -->", "",
+      "### Tests", "| AC | Test file › test name |", "|---|---|");
+    (spec.acs.length ? spec.acs : [{}]).forEach(function (a, i) { md.push("| AC" + (i + 1) + " | |"); });
+    md.push("", "### Risks & guardrails", "", "### PR split", "Single PR", "", "---", "");
+    md.push("## Second opinion (risky items only, `challenger`)", "<!-- Or \"n/a: not a risky item\". -->", "", "---", "");
+    md.push("## Test report (Stages 3–4)", "", "| AC | Test file › test name | Before build | After build |", "|---|---|---|---|");
+    (spec.acs.length ? spec.acs : [{}]).forEach(function (a, i) { md.push("| AC" + (i + 1) + " | | ❌ failing (expected) | |"); });
+    md.push("", "**Checks:**", "**Screenshots:**", "", "---", "");
+    md.push("## Build notes (Stage 4)", "", "- **Deviations from plan:**", "- **Parked ideas:**", "", "---", "");
+    md.push("## Review (Stage 5)", "", "**Verdict:**", "", "| # | Severity | file:line | Finding | Failure scenario |", "|---|---|---|---|---|", "| | | | | |", "");
+    return { md: md.join("\n"), path: "docs/specs/" + id + "-" + slug + ".md", branch: branch, file: id + "-" + slug + ".md" };
+  }
+
+  function renderAcs() {
+    var box = $("sp-acs"); box.innerHTML = "";
+    spec.acs.forEach(function (a, i) {
+      function inp(key, label) {
+        var id = "sp-ac-" + i + "-" + key;
+        var input = el("input", { type: "text", id: id, value: a[key] || "" });
+        input.addEventListener("input", function () { a[key] = input.value; specUpdate(); });
+        return el("div", { cls: "field", style: "margin:0" }, [el("label", { "for": id, text: label }), input]);
+      }
+      var rm = el("button", { type: "button", cls: "btn ghost", "aria-label": "Remove AC" + (i + 1), onclick: function () { spec.acs.splice(i, 1); renderAcs(); specUpdate(); } }, ["Remove"]);
+      if (spec.acs.length === 1) rm.disabled = true;
+      box.appendChild(el("div", { cls: "acrow" }, [el("div", { cls: "head" }, [el("span", { text: "AC" + (i + 1) }), rm]), inp("g", "Given"), inp("w", "When"), inp("t", "Then")]));
+    });
+  }
+  function fillForm() {
+    FIELDS.forEach(function (k) { $(FIELD_EL[k]).value = spec[k]; });
+    renderAcs();
+  }
+  function specUpdate() {
+    var r = specMd();
+    $("sp-out-md").textContent = r.md;
+    $("sp-path").textContent = r.path;
+    $("sp-branch").textContent = r.branch;
+    document.querySelector('label[for="sp-id"] + input + .hint').textContent = bid();
+    var acsOk = spec.acs.length > 0 && spec.acs.every(function (a) { return (a.g || "").trim() && (a.w || "").trim() && (a.t || "").trim(); });
+    var checks = [
+      [spec.title.trim().length > 0, "Has a title"],
+      [/^F\d+(\.\d+)*$/i.test(spec.feature.trim()), "Maps to one feature ID (like F8)"],
+      [spec.problem.trim().length > 0, "States the problem"],
+      [spec.who.trim() && spec.what.trim() && spec.why.trim(), "Has a complete user story"],
+      [acsOk, "Every acceptance criterion has Given, When and Then"],
+      [lines(spec.edges).length > 0, "Lists edge cases"],
+      [lines(spec.out).length > 0, "Says what's out of scope"]
+    ];
+    var ul = $("sp-ready"); ul.innerHTML = "";
+    checks.forEach(function (c) { ul.appendChild(el("li", null, [el("span", { cls: c[0] ? "y" : "n", text: c[0] ? "[✓] " : "[ ] " }), c[1]])); });
+    store("spec", spec);
+  }
+  FIELDS.forEach(function (k) {
+    $(FIELD_EL[k]).addEventListener("input", function () { spec[k] = $(FIELD_EL[k]).value; specUpdate(); });
+  });
+  $("sp-add-ac").addEventListener("click", function () {
+    spec.acs.push({ g: "", w: "", t: "" }); renderAcs(); specUpdate();
+    $("sp-ac-" + (spec.acs.length - 1) + "-g").focus();
+  });
+  $("sp-reset").addEventListener("click", function () {
+    spec = JSON.parse(JSON.stringify(SPEC_DEFAULT)); fillForm(); specUpdate(); say("Reset to the example.");
+  });
+  function say(msg) { $("sp-msg").textContent = msg; clearTimeout(say.t); say.t = setTimeout(function () { $("sp-msg").textContent = ""; }, 2600); }
+  $("sp-copy").addEventListener("click", function () {
+    var text = specMd().md;
+    function fallback() {
+      var ta = el("textarea", { style: "position:fixed;opacity:0" }); ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); say("Copied to the clipboard."); } catch (e) { say("Couldn't copy. Select the text and copy it by hand."); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function () { say("Copied to the clipboard."); }, fallback);
+    else fallback();
+  });
+  $("sp-download").addEventListener("click", function () {
+    var r = specMd();
+    var url = URL.createObjectURL(new Blob([r.md], { type: "text/markdown;charset=utf-8" }));
+    var a = el("a", { href: url, download: r.file }); document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    say("Downloaded " + r.file + ". Put it in docs/specs/.");
+  });
+  fillForm(); specUpdate();
+
+  /* =========================================================
+     04 · SETUP CHECKLIST
+     ========================================================= */
+  var su = load("setup", { ui: true, deploy: true, data: true, done: {} });
+  var STEPS = [
+    { id: "repo", text: "Click Use this template → Create a new repository on GitHub." },
+    { id: "delete", text: "Delete the kit-only files (the git rm command under Kit files)." },
+    { id: "readme", text: "Replace README.md with your own project's." },
+    { id: "prd", text: "Fill in PRD.md: the problem, feature IDs (F1…), scope and the deferred list." },
+    { id: "guard", text: "Fill in GUARDRAILS.md: your budget, approved services, and the high-risk areas in §8." },
+    { id: "claude", text: "Fill in CLAUDE.md: stack, layout, commands, conventions. Keep it short." },
+    { id: "design", text: "Fill in DESIGN.md: colour tokens, type, components.", when: "ui" },
+    { id: "ci", text: "Write one CI script for local and GitHub runs; replace <test command> and <full CI command> in WORKFLOW.md and .claude/agents/." },
+    { id: "runbook", text: "Fill in RUNBOOK.md: deploy, rollback, health check URL.", when: "deploy" },
+    { id: "backlog", text: "Add B-001 to BACKLOG.md → Now." },
+    { id: "go", text: "In Claude Code, say: \"Let's start B-001. Follow WORKFLOW.md.\"" }
+  ];
+  function suRender() {
+    var files = [
+      ["site/", "del", "Only publishes the kit's own explainer site."],
+      [".github/workflows/pages.yml", "del", "Publishes that site; it's guarded so it won't run in your copy anyway."],
+      ["README.md", "opt", "Replace with your project's README."],
+      ["DESIGN.md", su.ui ? "keep" : "del", su.ui ? "Your project has screens." : "No screens, so no design system needed."],
+      ["RUNBOOK.md", su.deploy ? "keep" : "opt", su.deploy ? "You deploy, so you need rollback steps." : "Keep as a stub until you deploy."],
+      ["GUARDRAILS.md §2", su.data ? "keep" : "opt", su.data ? "Data integrity rules apply to stored user data." : "Trim the data rules you don't need."],
+      ["PRD, CLAUDE, WORKFLOW, BACKLOG, CHANGELOG", "keep", "The core of the kit."],
+      ["docs/, .claude/agents/", "keep", "Spec, ADR and postmortem templates, and the five agents."],
+      ["LICENSE", "opt", "The kit is MIT; choose your own project's license."]
+    ];
+    var tb = $("su-files"); tb.innerHTML = "";
+    files.forEach(function (f) {
+      var label = { keep: "keep", del: "delete", opt: "edit" }[f[1]];
+      tb.appendChild(el("tr", null, [el("td", null, [el("code", { text: f[0] })]), el("td", { cls: f[1], text: label }), el("td", { text: f[2] })]));
+    });
+    var rm = ["site", ".github/workflows/pages.yml"]; if (!su.ui) rm.push("DESIGN.md");
+    var cmd = $("su-cmd"); cmd.innerHTML = "";
+    cmd.appendChild(el("div", null, [el("span", { cls: "ok", text: "$ " }), "git rm -r " + rm.join(" ")]));
+    cmd.appendChild(el("div", null, [el("span", { cls: "ok", text: "$ " }), "git commit -m \"chore: remove kit-only files\""]));
+
+    var ol = $("su-steps"); ol.innerHTML = "";
+    var total = 0, done = 0;
+    STEPS.forEach(function (s) {
+      var applies = !s.when || su[s.when];
+      if (applies) { total += 1; if (su.done[s.id]) done += 1; }
+      var id = "su-step-" + s.id;
+      var cb = el("input", { type: "checkbox", id: id });
+      cb.checked = !!su.done[s.id] && applies; cb.disabled = !applies;
+      cb.addEventListener("change", function () { su.done[s.id] = cb.checked; store("setup", su); suRender(); $(id).focus(); });
+      var txt = applies ? s.text : null;
+      ol.appendChild(el("li", { cls: applies ? "" : "na" }, [el("label", { cls: "check" + (applies ? "" : " disabled"), "for": id }, [cb, el("span", null, applies ? [txt] : [el("s", { text: s.text }), el("small", { text: "Not needed for your project." })])])]));
+    });
+    $("su-count").textContent = done + " of " + total + " done" + (done === total ? ". Ready to start B-001." : "");
+    $("su-bar").style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+  }
+  ["ui", "deploy", "data"].forEach(function (k) {
+    var cb = $("su-" + k); cb.checked = su[k];
+    cb.addEventListener("change", function () { su[k] = cb.checked; store("setup", su); suRender(); });
+  });
+  $("su-clear").addEventListener("click", function () { su.done = {}; store("setup", su); suRender(); });
+  suRender();
+})();
+</script>
+</body>
+</html>
