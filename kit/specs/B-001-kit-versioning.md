@@ -80,118 +80,88 @@ kit has no home for its own backlog and task files because the root
 ### Acceptance criteria
 "Automated" = a local, repeatable command (named in the Build plan).
 "Verified on GitHub after merge" = can only run on GitHub; the exact steps are given.
+"Tag-match step" = the check in `release.yml` that runs before any release is created.
 
 | # | Given | When | Then |
 |---|---|---|---|
-| AC1 | The B-001 branch | `.kit-version` at the repo root is read | It is exactly one line in the agreed format (open question Q1), naming version `v0.1.0`, e.g. `project-starter-kit v0.1.0`. *Automated.* |
+| AC1 | The B-001 branch | `.kit-version` at the repo root is read | Its content is exactly the line `project-starter-kit v0.1.0` (one line, optionally followed by a newline; nothing else). *Automated.* |
 | AC2 | `.github/workflows/release.yml` | Its trigger is inspected | It runs only on `push` of tags matching `v*` (no branch pushes, no PRs, no schedule). *Automated (parse the YAML).* |
 | AC3 | `release.yml` | Its jobs are inspected | Every job has `if: github.repository == 'Eugenelcc/project-starter-kit'`, the same guard as `pages.yml`. *Automated (parse the YAML).* |
 | AC4 | `release.yml` | Its permissions and secrets are inspected | It uses only the built-in `GITHUB_TOKEN` (no other `secrets.*`), with no permission beyond `contents: write`, and no paid or card-required service. *Automated (parse the YAML).* |
-| AC5 | The tag-match step of `release.yml` | It runs with tag `v9.9.9` while `.kit-version` names `v0.1.0` | It exits non-zero before any release is created, and its error message names both the tag and the `.kit-version` value and says to bump `.kit-version`. *Automated (run the step locally with those inputs).* |
-| AC6 | The tag-match step | It runs with tag `v0.1.0` while `.kit-version` names `v0.1.0` | It exits zero. *Automated (same harness as AC5).* |
-| AC7 | B-001 merged to `main`, `.kit-version` naming `v0.1.0` | Tag `v0.1.0` is pushed on the merge commit | A GitHub Release `v0.1.0` exists with auto-generated notes. *Verified on GitHub after merge:* the Actions run for the tag is green, and `gh api repos/Eugenelcc/project-starter-kit/releases/tags/v0.1.0 --jq '.tag_name, (.body \| length > 0)'` prints `v0.1.0` and `true`. |
-| AC8 | The README | A reader looks for how the kit is versioned and released | A section explains: SemVer 0.x starting at `v0.1.0`; what `.kit-version` is and that projects keep it; release notes live in GitHub Releases (no kit changelog file); the release steps (bump `.kit-version` → merge → push the `v*` tag) and that the workflow refuses a mismatched tag. *Scripted manual check: the reviewer ticks each of these five points against the README.* |
-| AC9 | The README | A reader looks for the kit's backlog conventions | It states: the kit backlog is GitHub Issues; titles are `B-### <title>` with IDs never reused; status is shown by labels, listing all seven: `status: todo`, `status: spec`, `status: planned`, `status: tests`, `status: in progress`, `status: in review`, `status: done` (WORKFLOW §7); labels only, no Project board. *Automated (grep README for each label and for `B-###`).* |
-| AC10 | The repo | `kit/specs/` is inspected | It exists, holds `B-001-kit-versioning.md`, and the README says kit task files live in `kit/specs/B-###-<slug>.md` (the kit's equivalent of `docs/specs/`) and that projects delete `kit/` at setup. *Automated (file exists + grep README).* |
-| AC11 | README "Start a new project" step 2 | It is read | The delete list names `site/`, `.github/workflows/pages.yml`, `kit/` and `.github/workflows/release.yml`. *Automated (grep).* |
-| AC12 | `site/index.html` "From template to first task" | It is read | The delete step names the same four paths as AC11. *Automated (grep).* |
-| AC13 | The playground setup checklist, "Kit files" table | It renders, with "has screens" on and then off | Both `kit/` and `.github/workflows/release.yml` appear as rows marked **delete**, alongside `site/` and `pages.yml`. *Scripted manual check in a browser (or headless).* |
-| AC14 | The playground setup checklist, git rm command | It renders, with "has screens" on and then off | The `git rm -r` line includes `site`, `.github/workflows/pages.yml`, `kit` and `.github/workflows/release.yml` both times (plus `DESIGN.md` when screens are off). *Scripted manual check, same session as AC13.* |
-| AC15 | `site/playground.html` at 375 px width, light and dark | The setup tab is opened and both toggle states are rendered | `document.documentElement.scrollWidth <= document.documentElement.clientWidth` (no page-level horizontal scroll; the command box may scroll inside itself) and the console shows zero errors. *Scripted manual check.* |
-| AC16 | `site/index.html` and `site/playground.html` after the change | They load | The network panel shows no request outside the site's own origin. *Scripted manual check.* |
+| AC5 | The tag-match step, on a commit on `main` | It runs with tag `v9.9.9` while `.kit-version` is `project-starter-kit v0.1.0` | It exits non-zero before any release is created, and its error names both the tag and the `.kit-version` line and says to bump `.kit-version`. *Automated (run the step locally with those inputs).* |
+| AC6 | The tag-match step, on a commit on `main` | It runs with tag `v0.1.0` while `.kit-version` is `project-starter-kit v0.1.0` | It exits zero. *Automated (same harness as AC5).* |
+| AC7 | The tag-match step, on a commit on `main` | It runs with tag `v0.1.0` while `.kit-version` is `starter-kit v0.1.0` (wrong prefix) | It exits non-zero, and its error says the line must be exactly `project-starter-kit vX.Y.Z`. *Automated (same harness).* |
+| AC8 | The tag-match step, on a commit on `main` | It runs with tag `v0.2.0-rc.1` while `.kit-version` is `project-starter-kit v0.2.0-rc.1` | It exits non-zero, and its error says pre-release tags are not published and only `vX.Y.Z` is allowed. *Automated (same harness).* |
+| AC9 | The tag-match step, with tag and `.kit-version` both `v0.1.0`, on a commit that is **not** on `main` | It runs | It exits non-zero, and its error says the tagged commit must be on `main`. *Automated (same harness, in a throwaway local git repo with a side-branch commit).* |
+| AC10 | B-001 merged to `main`, `.kit-version` is `project-starter-kit v0.1.0` | Claude, when the owner asks, pushes tag `v0.1.0` on the merge commit | A GitHub Release `v0.1.0` exists with auto-generated notes. *Verified on GitHub after merge:* the Actions run for the tag is green, and `gh api repos/Eugenelcc/project-starter-kit/releases/tags/v0.1.0 --jq '.tag_name, .prerelease, (.body \| length > 0)'` prints `v0.1.0`, `false`, `true`. |
+| AC11 | B-001 merged | Claude, when the owner asks, creates the missing labels | The repo has `backlog` plus all seven `status: …` labels from AC13. *Verified on GitHub after merge:* `gh api repos/Eugenelcc/project-starter-kit/labels --paginate --jq '.[].name'` lists all eight. |
+| AC12 | The README | A reader looks for how the kit is versioned and released | A section explains: SemVer 0.x starting at `v0.1.0`; that `.kit-version` is exactly `project-starter-kit vX.Y.Z` and projects keep it; release notes live in GitHub Releases (no kit changelog file); the release steps (bump `.kit-version` → merge → push the `vX.Y.Z` tag on `main`); and that the workflow refuses a mismatched line, a pre-release tag, or a tag off `main`. *Scripted manual check: the reviewer ticks each of these five points against the README.* |
+| AC13 | The README | A reader looks for the kit's backlog conventions | It states: the kit backlog is GitHub Issues; titles are `B-### <title>` with IDs never reused; the `backlog` label marks an issue as a `B-###` item; status is shown by labels, listing all seven: `status: todo`, `status: spec`, `status: planned`, `status: tests`, `status: in progress`, `status: in review`, `status: done` (WORKFLOW §7); labels only, no Project board; and the labels are created by Claude with `gh` when the owner asks. *Automated (grep README for `backlog`, each status label and `B-###`).* |
+| AC14 | The repo | `kit/specs/` is inspected | It exists, holds `B-001-kit-versioning.md`, and the README says kit task files live in `kit/specs/B-###-<slug>.md` (the kit's equivalent of `docs/specs/`) and that projects delete `kit/` at setup. *Automated (file exists + grep README).* |
+| AC15 | README "Start a new project" step 2 | It is read | The delete list names `site/`, `.github/workflows/pages.yml`, `kit/` and `.github/workflows/release.yml`. *Automated (grep).* |
+| AC16 | `site/index.html` "From template to first task" | It is read | The delete step names the same four paths as AC15. *Automated (grep).* |
+| AC17 | The playground setup checklist, "Kit files" table | It renders, with "has screens" on and then off | Both `kit/` and `.github/workflows/release.yml` appear as rows marked **delete**, alongside `site/` and `pages.yml`. *Scripted manual check in a browser (or headless).* |
+| AC18 | The playground setup checklist, git rm command | It renders, with "has screens" on and then off | The `git rm -r` line includes `site`, `.github/workflows/pages.yml`, `kit` and `.github/workflows/release.yml` both times (plus `DESIGN.md` when screens are off). *Scripted manual check, same session as AC17.* |
+| AC19 | `site/playground.html` at 375 px width, light and dark | The setup tab is opened and both toggle states are rendered | `document.documentElement.scrollWidth <= document.documentElement.clientWidth` (no page-level horizontal scroll; the command box may scroll inside itself) and the console shows zero errors. *Scripted manual check.* |
+| AC20 | `site/index.html` and `site/playground.html` after the change | They load | The network panel shows no request outside the site's own origin. *Scripted manual check.* |
 
 ### Edge cases
 - **Tag without the leading `v`** (`0.2.0`): doesn't match `v*`, so the
   workflow doesn't start and no release is made.
-- **Pre-release tag** (`v0.2.0-rc.1`): matches `v*`. What happens is open
-  question Q2.
-- **`.kit-version` with a trailing newline, trailing spaces, or Windows line
-  endings**: how strict the comparison is, is part of open question Q1.
+- **Pre-release or other non-`vX.Y.Z` tag** (`v0.2.0-rc.1`, `v1`, `v0.2`):
+  matches `v*`, so the workflow starts, then refuses with a clear error (AC8).
+- **`.kit-version` with a trailing newline or trailing spaces**: ignored; the
+  line still matches. Anything else (a wrong or missing prefix, extra text,
+  a second non-empty line, leading spaces) fails (AC7).
+- **`.kit-version` with Windows line endings (`\r\n`)**: the `\r` is trailing
+  whitespace, so it is ignored like any other.
 - **`.kit-version` missing or empty on the tagged commit**: refuse, with an
-  error saying the file is missing; no release.
-- **Tag pushed on a commit that isn't on `main`** (e.g. a feature branch):
-  open question Q3.
+  error saying the file is missing or empty; no release.
+- **Tag pushed on a commit that isn't on `main`** (e.g. a feature branch
+  before merge): refused (AC9).
 - **Workflow re-run, or a tag deleted and pushed again after its release
   exists**: never creates a second release and never overwrites the existing
   release's notes.
 - **Two tags pushed on the same commit** (`v0.1.0` and `v0.1.1`): each is
-  checked on its own; at most the one matching `.kit-version` publishes.
+  checked on its own; only the one matching `.kit-version` publishes.
 - **A template copy that keeps `release.yml` by mistake**, or a fork: pushing
   a `v*` tag there skips the job (guard), creates no release and needs no
   secret.
 - **A template copy that keeps `kit/` by mistake**: harmless, but the delete
-  list (AC11–AC14) is the only safeguard; no automation removes it.
+  list (AC15–AC18) is the only safeguard; no automation removes it.
+- **A label that already exists** (`backlog`, `status: todo`): creating labels
+  leaves it as is; no duplicate, no error that stops the rest.
 - **Playground with saved setup ticks from before this change**
-  (`localStorage`): still renders without errors (covered by AC15's console
+  (`localStorage`): still renders without errors (covered by AC19's console
   check, run once with old saved state).
 - **Narrow screen and a longer `git rm` line**: the command scrolls or wraps
-  inside its box; the page itself never scrolls sideways (AC15).
+  inside its box; the page itself never scrolls sideways (AC19).
 
 ### Out of scope
 - A kit-sync script that pulls kit updates into existing projects (parked).
 - "Lesson from a project" issue templates (parked).
+- A "Backlog item" issue template (left to B-003, issue #4).
 - A GitHub Project board (decided: labels only).
 - A kit changelog file (decided: GitHub Releases instead).
+- Publishing pre-releases (decided: refused).
 - Releases for any version before `v0.1.0`.
 - Changes to the root templates (`PRD.md`, `GUARDRAILS.md`, `BACKLOG.md`,
   `CHANGELOG.md`, `WORKFLOW.md`, `docs/specs/TEMPLATE.md`, `.claude/agents/`).
 
 ### Open questions for the owner
-
-**Q1. What exactly goes in `.kit-version`, and how strict is the check?**
-*Scenario:* you bump the file, your editor adds a newline at the end, or
-you type `v0.2.0` without the `project-starter-kit` prefix. Should the
-release still go through?
-- **A. Fixed format `project-starter-kit vX.Y.Z`, one line; only a trailing
-  newline/whitespace is ignored.** Pro: matches your recap example, readable
-  on its own in a project a year later. Con: a typo in the prefix blocks a
-  release (with a clear error).
-- **B. Just the version, `v0.1.0`.** Pro: simplest to compare and to read by
-  scripts. Con: in a project, the file alone doesn't say *which* kit it
-  refers to.
-- **C. Format A, but the check only compares the `vX.Y.Z` part and ignores the
-  rest.** Pro: forgiving. Con: a broken prefix can ship and be copied into
-  every new project.
-
-**Q2. Are pre-release tags (e.g. `v0.2.0-rc.1`) allowed?**
-*Scenario:* before a big process change you want people to try it, so you
-push `v0.2.0-rc.1`.
-- **A. Allowed, published as a GitHub "pre-release"** (`.kit-version` must
-  say `v0.2.0-rc.1`). Pro: room to trial changes. Con: template copies made
-  while `main` says `-rc.1` record a pre-release version.
-- **B. Refused with a clear error; only `vX.Y.Z` publishes.** Pro: simple, every
-  release is final. Con: no way to trial a release except on a branch.
-- **C. Allowed as a normal release, no pre-release flag.** Pro: no extra rule.
-  Con: an rc looks like the latest stable release.
-
-**Q3. What if a tag is pushed on a commit that isn't on `main`?**
-*Scenario:* you tag your feature branch by mistake before it merges.
-- **A. Refuse: the tagged commit must be on `main`.** Pro: a release always
-  matches what template users actually get. Con: one more check in the
-  workflow.
-- **B. Allow: only the tag/`.kit-version` match is checked.** Pro: simpler.
-  Con: a release could describe code that never reached `main`.
-
-**Q4. Does B-001 include the "Backlog item" issue template?**
-*Scenario:* issue #2's rough scope lists a "Backlog item" issue template, but
-the recap doesn't mention it, and B-003 (#4) covers "PR and issue templates".
-- **A. Leave it to B-003.** Pro: B-001 stays small; all templates designed
-  together. Con: until B-003, new kit issues are formatted by hand.
-- **B. Add it in B-001.** Pro: conventions and template ship together. Con:
-  overlaps B-003, and the template must be added to the setup delete list too
-  (`.github/ISSUE_TEMPLATE/`).
-
-**Q5. Who does the GitHub-side steps that aren't in the PR?**
-*Scenario:* the README will list seven `status: …` labels, but only
-`status: todo` and `backlog` exist on the repo today; and `v0.1.0` must be
-tagged after the merge.
-- **A. You do them by hand** (create the six missing labels; push the tag).
-  Pro: nothing touches the public repo outside a reviewed PR. Con: manual
-  steps you could forget.
-- **B. Claude does them with `gh` when you ask**, after merge. Pro: exact
-  names, less typing. Con: Claude acts on the repo outside a PR.
-- Also: should the README list the existing **`backlog`** label as part of the
-  convention (it's on #2–#4 today), or only the status labels?
+None. **Answered by owner, 2026-10-31:**
+- **Q1 → A.** `.kit-version` is exactly `project-starter-kit vX.Y.Z` on one
+  line. Only trailing whitespace or a newline is ignored. The whole line is
+  checked strictly, so a wrong prefix fails with a clear error.
+- **Q2 → B.** Pre-release tags (e.g. `v0.2.0-rc.1`) are refused with a clear
+  error. Only `vX.Y.Z` publishes.
+- **Q3 → A.** A tag on a commit that isn't on `main` is refused.
+- **Q4 → A.** No issue template in B-001; it's left to B-003 (issue #4).
+- **Q5 → B.** After merge, when the owner asks, Claude creates the six
+  missing `status:` labels and pushes the `v0.1.0` tag (outside the PR). The
+  README says the labels are created this way.
+- **Q5b → yes.** The README documents the `backlog` label (it marks an issue
+  as a `B-###` item) alongside the seven status labels.
 
 ---
 
