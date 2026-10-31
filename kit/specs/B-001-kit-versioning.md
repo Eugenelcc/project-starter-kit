@@ -1,6 +1,6 @@
 # B-001 — Kit versioning and the kit's own backlog
 
-**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** plan approved; tests next
+**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** built; awaiting review
 <!-- After each approval, Claude adds a line:
      Requirements approved by owner, YYYY-MM-DD
      Build plan approved by owner, YYYY-MM-DD -->
@@ -429,38 +429,39 @@ tag (outside the PR).
 
 | AC | Test file › test name | Before build | After build |
 |---|---|---|---|
-| AC1 | test-kit-files.sh › AC1 kit-version is exactly the v0.1.0 line | ❌ failing (expected) | |
-| AC2 | test-release-workflow.py › AC2 triggers only on v* tag pushes | ❌ failing (expected) | |
-| AC3 | test-release-workflow.py › AC3 every job has the repo guard | ❌ failing (expected) | |
-| AC4 | test-release-workflow.py › AC4 only GITHUB_TOKEN, contents write, checkout only | ❌ failing (expected) | |
-| AC5 | test-check-release.sh › AC5 mismatched tag refused | ❌ failing (expected) | |
-| AC6 | test-check-release.sh › AC6 matching tag on main passes | ❌ failing (expected) | |
-| AC7 | test-check-release.sh › AC7 wrong prefix refused | ❌ failing (expected) | |
-| AC8 | test-check-release.sh › AC8 pre-release tag refused | ❌ failing (expected) | |
-| AC9 | test-check-release.sh › AC9 tag off main refused | ❌ failing (expected) | |
+| AC1 | test-kit-files.sh › AC1 kit-version is exactly the v0.1.0 line | ❌ failing (expected) |  ✅ |
+| AC2 | test-release-workflow.py › AC2 triggers only on v* tag pushes | ❌ failing (expected) |  ✅ |
+| AC3 | test-release-workflow.py › AC3 every job has the repo guard | ❌ failing (expected) |  ✅ |
+| AC4 | test-release-workflow.py › AC4 only GITHUB_TOKEN, contents write, checkout only | ❌ failing (expected) |  ✅ |
+| AC5 | test-check-release.sh › AC5 mismatched tag refused | ❌ failing (expected) |  ✅ |
+| AC6 | test-check-release.sh › AC6 matching tag on main passes | ❌ failing (expected) |  ✅ |
+| AC7 | test-check-release.sh › AC7 wrong prefix refused | ❌ failing (expected) |  ✅ |
+| AC8 | test-check-release.sh › AC8 pre-release tag refused | ❌ failing (expected) |  ✅ |
+| AC9 | test-check-release.sh › AC9 tag off main refused | ❌ failing (expected) |  ✅ |
 | AC10 | verified on GitHub after merge (Release run green + gh api) | manual / after merge | |
 | AC11 | verified on GitHub after merge (gh api labels) | manual / after merge | |
 | AC12 | reviewer ticks five README points | manual / reviewer | |
-| AC13 | test-kit-files.sh › AC13 README backlog conventions | ❌ failing (expected) | |
-| AC14 | test-kit-files.sh › AC14 kit/specs exists and is documented | ❌ failing (expected) | |
-| AC15 | test-kit-files.sh › AC15 README delete list | ❌ failing (expected) | |
-| AC16 | test-kit-files.sh › AC16 index.html delete list | ❌ failing (expected) | |
-| AC17 | test-site.cjs › AC17 files table lists kit/ and release.yml as delete (screens on/off) | ❌ failing (expected) | |
-| AC18 | test-site.cjs › AC18 git rm line includes all kit-only paths (screens on/off) | ❌ failing (expected) | |
-| AC19 | test-site.cjs › AC19 no horizontal overflow or console errors at 375px | ✅ passes before build (regression guard: site is unchanged so far; flagged) | |
-| AC20 | test-site.cjs › AC20 no external requests | ✅ passes before build (regression guard; flagged) | |
-| Edge | test-check-release.sh › 11 EDGE tests (CRLF, annotated tag, missing/empty/2-line/leading-space file, no-v/short/unknown tag, TAG unset, bad main ref) | ❌ failing (expected) | |
+| AC13 | test-kit-files.sh › AC13 README backlog conventions | ❌ failing (expected) |  ✅ |
+| AC14 | test-kit-files.sh › AC14 kit/specs exists and is documented | ❌ failing (expected) |  ✅ |
+| AC15 | test-kit-files.sh › AC15 README delete list | ❌ failing (expected) |  ✅ |
+| AC16 | test-kit-files.sh › AC16 index.html delete list | ❌ failing (expected) |  ✅ |
+| AC17 | test-site.cjs › AC17 files table lists kit/ and release.yml as delete (screens on/off) | ❌ failing (expected) |  ✅ |
+| AC18 | test-site.cjs › AC18 git rm line includes all kit-only paths (screens on/off) | ❌ failing (expected) |  ✅ |
+| AC19 | test-site.cjs › AC19 no horizontal overflow or console errors at 375px | ✅ passes before build (regression guard: site is unchanged so far; flagged) |  ✅ |
+| AC20 | test-site.cjs › AC20 no external requests | ✅ passes before build (regression guard; flagged) |  ✅ |
+| Edge | test-check-release.sh › 11 EDGE tests (CRLF, annotated tag, missing/empty/2-line/leading-space file, no-v/short/unknown tag, TAG unset, bad main ref) | ❌ failing (expected) |  ✅ |
 | Edge | re-run, guard skip in fork, two tags on one commit | manual / reviewer reads release.yml | |
 
-**Checks:** `bash kit/scripts/test-all.sh` run before build: all feature tests fail as expected; AC19/AC20 pass trivially (guards).
+**Checks (after build):** `bash kit/scripts/test-all.sh` exit 0, 0 FAIL (28 PASS); `.github/workflows/*.yml` parse as YAML.
+**Checks (before build):** `bash kit/scripts/test-all.sh` run before build: all feature tests fail as expected; AC19/AC20 pass trivially (guards).
 **Screenshots:** <!-- UI changes: light + dark at phone width, attached to the PR — or "n/a" -->
 
 ---
 
 ## Build notes (Stage 4)
 
-- **Deviations from plan:** <!-- "none", or what and why (a plan change needs owner re-approval) -->
-- **Parked ideas:** <!-- added to BACKLOG → Later, or "none" -->
+- **Deviations from plan:** none
+- **Parked ideas:** a kit CI workflow that runs `bash kit/scripts/test-all.sh` on PRs (tests currently run locally only; see Residual risk).
 
 ---
 

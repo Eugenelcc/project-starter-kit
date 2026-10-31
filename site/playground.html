@@ -983,6 +983,9 @@ A note containing a comma or a quote</textarea></div>
     var files = [
       ["site/", "del", "Only publishes the kit's own explainer site."],
       [".github/workflows/pages.yml", "del", "Publishes that site; it's guarded so it won't run in your copy anyway."],
+      ["kit/", "del", "The kit's own task files and release scripts."],
+      [".github/workflows/release.yml", "del", "Publishes kit releases; it's guarded so it won't run in your copy anyway."],
+      [".kit-version", "keep", "Records which kit version your project came from."],
       ["README.md", "opt", "Replace with your project's README."],
       ["DESIGN.md", su.ui ? "keep" : "del", su.ui ? "Your project has screens." : "No screens, so no design system needed."],
       ["RUNBOOK.md", su.deploy ? "keep" : "opt", su.deploy ? "You deploy, so you need rollback steps." : "Keep as a stub until you deploy."],
@@ -996,7 +999,7 @@ A note containing a comma or a quote</textarea></div>
       var label = { keep: "keep", del: "delete", opt: "edit" }[f[1]];
       tb.appendChild(el("tr", null, [el("td", null, [el("code", { text: f[0] })]), el("td", { cls: f[1], text: label }), el("td", { text: f[2] })]));
     });
-    var rm = ["site", ".github/workflows/pages.yml"]; if (!su.ui) rm.push("DESIGN.md");
+    var rm = ["site", "kit", ".github/workflows/pages.yml", ".github/workflows/release.yml"]; if (!su.ui) rm.push("DESIGN.md");
     var cmd = $("su-cmd"); cmd.innerHTML = "";
     cmd.appendChild(el("div", null, [el("span", { cls: "ok", text: "$ " }), "git rm -r " + rm.join(" ")]));
     cmd.appendChild(el("div", null, [el("span", { cls: "ok", text: "$ " }), "git commit -m \"chore: remove kit-only files\""]));
