@@ -1,10 +1,11 @@
 # B-001 — Kit versioning and the kit's own backlog
 
-**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** awaiting owner approval (Build plan)
+**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** plan approved; tests next
 <!-- After each approval, Claude adds a line:
      Requirements approved by owner, YYYY-MM-DD
      Build plan approved by owner, YYYY-MM-DD -->
 Requirements approved by owner, 2026-10-31
+Build plan approved by owner, 2026-10-31 (incl. re-run = leave existing release unchanged, labels colour `ededed`)
 
 Process: [`WORKFLOW.md`](../../WORKFLOW.md). **This one file is the handoff between agents:**
 each writes only its own section. Worked example:
