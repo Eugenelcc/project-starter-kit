@@ -6,7 +6,9 @@ new project the same foundation: what to build, the hard rules, one file per
 task, and a pipeline where Claude never assumes and the owner approves every
 important step.
 
-**Explainer site:** https://eugenelcc.github.io/project-starter-kit/
+**Explainer site:** https://eugenelcc.github.io/project-starter-kit/ ·
+**Playground:** https://eugenelcc.github.io/project-starter-kit/playground.html
+(simulate the pipeline, check a task's lane, build a spec file, track setup)
 **Worked example:** [Spendlygo](https://github.com/Eugenelcc/spendlygo), a
 Telegram expense tracker built with this exact process. Every template below
 links to Spendlygo's real, filled-in version.
