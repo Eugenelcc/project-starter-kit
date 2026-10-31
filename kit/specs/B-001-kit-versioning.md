@@ -467,11 +467,47 @@ tag (outside the PR).
 
 ## Review (Stage 5)
 
-**Verdict:** <!-- ready for owner · back to build · back to plan -->
+**Verdict:** ready for owner
+
+`bash kit/scripts/test-all.sh`: exit 0, 28 PASS / 0 FAIL (16 check-release, 3 workflow, 5 file/grep, 4 Playwright). `release.yml` and `pages.yml` both parse with PyYAML. `.kit-version` is exactly `project-starter-kit v0.1.0\n` (27 bytes). Script modes are `100755` as planned. Commits on the branch go tests first, then the build.
+
+No blocking findings. All of these are low or informational:
 
 | # | Severity | file:line | Finding | Failure scenario |
 |---|---|---|---|---|
-| | | | | |
+| 1 | Low (docs) | `README.md:104` | The "Local dry run" command only works once a local `v0.1.0` tag exists. Check 3 needs `refs/tags/$TAG`. So it can't be used as a check *before* tagging. | The owner runs it after bumping `.kit-version` but before tagging. It prints `no such tag in this repository` and exits 1, which looks like a failure. Wording fix (e.g. "after `git tag vX.Y.Z` locally, before pushing it") could go in this PR or a later one. |
+| 2 | Low (test) | `kit/scripts/test-kit-files.sh:24` | The AC13 needle `gh` matches almost any English text ("through", "right"…). That part of AC13 passes trivially. | A later edit drops "Claude creates the labels with `gh`", and AC13 still passes. I checked by hand: `README.md:116` states it today. A tighter needle would be `` `gh` ``. |
+| 3 | Info (security) | `.github/workflows/release.yml:18,25` | `check-release.sh` runs from the **tagged** commit, and checkout keeps the `contents: write` token in `.git/config` (`persist-credentials` is on by default). If a tagged side-branch commit has a modified script, it could skip the off-main check. | This needs push access to tags, and anyone with that can already create releases. So nothing is escalated, and a public outsider can't trigger it (forks or template copies: job skipped by the guard). Possible hardening, parked: `persist-credentials: false` and/or run the script from `origin/main`. Not built, because the plan fixed the exact YAML. |
+| 4 | Info | `release.yml:5-7` | GitHub creates no `push` events when more than 3 tags are pushed at once. | `git push --tags` with 4+ new tags: no run and no release. The documented flow pushes one tag (`git push origin v0.1.0`), so no change is needed. |
+| 5 | Info | `release.yml:18` | `actions/checkout@v4` is pinned by major version, not by SHA. | This matches `pages.yml` and the owner's plan decision. It's GitHub's own action, so I accept it. |
+| 6 | Trivial | `site/index.html:357` | The text says "the kit's releases and task files". The plan said "the kit's own releases and task files". | None. It's a one-word wording difference. |
 
-**Guardrail self-check** (WORKFLOW §4)
-- [ ] Cost · [ ] Data · [ ] Auth + cross-user test · [ ] Privacy · [ ] <Project-specific>
+**Workflow behaviour (checked by reading, can't be run without pushing tags):**
+- Trigger: only `push` of tags matching `v*` (glob `*` doesn't cross `/`). No branches, PRs or schedule. ✅
+- Repo guard on the only job (`release`), the same string as `pages.yml`. In a template copy or fork the job is **skipped** (not failed), no release is made and no secret is used. ✅
+- Permissions: top-level `contents: write` only, and no job-level override. The only secret is `GITHUB_TOKEN`. ✅
+- Injection: `${{ github.ref_name }}` shows up only in `env:` and in the `concurrency.group` expression (not a shell). The `run:` blocks contain no `${{ }}`. `TAG` is regex-checked (`^v[0-9]+\.[0-9]+\.[0-9]+$`) before any git call, and is always quoted. I tried `v1.0.0$(id)` and a newline-suffixed tag locally: both are refused at check 2. ✅
+- `gh release create "$TAG" --verify-tag --generate-notes --title "$TAG"`: no `--prerelease` and no `--draft`. ✅
+- Re-run, or the same tag pushed again with its release already there: check-release passes again, `gh release view` succeeds, the step prints "already exists; leaving it unchanged." and exits 0. The run is green and the notes are untouched. If `view` fails for another reason (API error), `create` then fails because the release exists, so the run is red: a safe failure. `concurrency` (per tag, no cancel) serialises duplicate runs. ✅
+- Two tags on one commit: each tag gets its own run and its own concurrency group. I checked it locally: `v0.1.0` → OK (exit 0), `v0.1.1` → "Bump .kit-version…" (exit 1, red, no release). ✅
+- `fetch-depth: 0` fetches all branches as `refs/remotes/origin/*` plus tags, so `MAIN_REF=origin/main` resolves. A tag on a pre-B-001 `main` commit has no `kit/scripts/check-release.sh`, so the run is red with no release (safe). ✅
+
+**`check-release.sh`:** it matches the interface table exactly: order, exit codes 2/1/1/2/1/1/1/1/1, messages and stderr/stdout. `.kit-version` is read only via `git show refs/tags/$TAG:.kit-version`, and annotated tags peel correctly (EDGE test). The trailing-whitespace strip handles CRLF and whitespace-only content (gives empty → "is empty"). Bash `=~` anchors at the whole string, so a second line or a leading space fails (EDGE tests). `set -euo pipefail` causes no problems: every failing command sits on the left of `||`, and `${TAG:-}`/`${MAIN_REF:-}` defaults avoid `-u` aborts. `refs/tags/` is explicit, so a branch named like the tag can't be confused with it.
+
+**AC → test:** AC1–AC9 and AC13–AC20 each have a test that really exercises them. I mutation-checked by reading: AC5/AC9 assert the specific message, not only the exit code. The weak spot is the `gh` needle in AC13 (finding 2). AC19/AC20 passed before the build by design: they guard against regressions, as flagged in the Test report. Every spec edge case is either an EDGE test or one of the read-checks above. AC10/AC11 are post-merge GitHub checks, as planned.
+
+**AC12 (reviewer's manual check, README "Kit versions and releases")**
+- [x] SemVer 0.x, first release `v0.1.0`
+- [x] `.kit-version` is exactly `project-starter-kit vX.Y.Z`, and projects keep it
+- [x] Release notes in GitHub Releases, no kit changelog file
+- [x] Steps: bump `.kit-version` in a PR → merge → push the `vX.Y.Z` tag on the `main` commit
+- [x] Refuses a mismatched line, a pre-release or non-`vX.Y.Z` tag, and a tag off `main`
+
+**Plan fidelity:** every file in the plan's Files table is present and matches it (YAML byte-for-byte with the plan, plus the header comment). Nothing extra was built. The kit CI idea is parked in Build notes. No root templates were touched. The delete list is the same in all places: README step 2, `site/index.html:357`, the playground files table and the `git rm` array, and the `release.yml`/`check-release.sh` header comments. No other doc names the old two-item list. There's no CHANGELOG to update: by owner decision the kit uses GitHub Releases, and the root `CHANGELOG.md` is a template.
+
+**Guardrail self-check (kit rules)**
+- [x] **Free (S$0):** GitHub Actions on a public repo, the preinstalled `gh`, GitHub's own `actions/checkout`. No new service and no dependency added.
+- [x] **Public repo, no secrets:** only the built-in `GITHUB_TOKEN`. Test repos use `test@example.invalid`. No personal data in the diff.
+- [x] **Kit-only files don't burden projects:** `release.yml` is guarded and on the delete list. `kit/` is on the delete list everywhere. `.kit-version` is meant to be kept.
+- [x] **Site has no external requests:** only copy and JS array edits, no CSS or script. AC20 (Playwright request log) and AC19 (375 px, light/dark/old state, zero console errors) both pass.
+- [x] **Claude never merges, PR only when asked:** no PR opened. The tag push and label creation stay after merge, and only when the owner asks.
