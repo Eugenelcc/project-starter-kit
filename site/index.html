@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Starter Kit</title>
+<meta name="description" content="A free set of project documents and Claude Code agents: one file per task, tests first, the owner approves every important step.">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --surface-2: #f2f0ea;
+  --text: #1d1c1a;
+  --muted: #5d5a53;
+  --border: #e2ded4;
+  --accent: #b4441f;
+  --accent-soft: #f7e6de;
+  --opus: #6a3fb5;
+  --opus-soft: #ede6f8;
+  --sonnet: #1f6f5c;
+  --sonnet-soft: #dff1eb;
+  --gate: #9a6a00;
+  --gate-soft: #fbf0d4;
+  --code-bg: #f2f0ea;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161514;
+    --surface: #1f1e1c;
+    --surface-2: #282724;
+    --text: #ecebe7;
+    --muted: #a8a49b;
+    --border: #36342f;
+    --accent: #ee8a63;
+    --accent-soft: #3a2519;
+    --opus: #b79af0;
+    --opus-soft: #2c2340;
+    --sonnet: #6fcdb3;
+    --sonnet-soft: #17322b;
+    --gate: #e8bc55;
+    --gate-soft: #362b12;
+    --code-bg: #282724;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+main { max-width: 860px; margin: 0 auto; padding: 0 16px 64px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+code {
+  font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+h1, h2, h3 { line-height: 1.25; }
+h2 { margin-top: 56px; font-size: 1.5rem; }
+h3 { font-size: 1.1rem; margin: 0 0 6px; }
+p { margin: 0 0 14px; }
+.muted { color: var(--muted); }
+
+header.hero { padding: 48px 0 8px; }
+.eyebrow { font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
+.hero h1 { font-size: clamp(2rem, 7vw, 3rem); margin: 0 0 14px; }
+.hero .lede { font-size: 1.15rem; color: var(--muted); max-width: 40em; }
+.buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.btn {
+  display: inline-block; padding: 10px 16px; border-radius: 8px;
+  text-decoration: none; font-weight: 600; border: 1px solid var(--border);
+  color: var(--text); background: var(--surface);
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+nav.toc { margin-top: 32px; padding: 14px 16px; background: var(--surface-2); border-radius: 10px; font-size: 0.95rem; }
+nav.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 24px; }
+@media (max-width: 520px) { nav.toc ol { columns: 1; } }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.card .where { font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; }
+.card p { margin: 0; font-size: 0.95rem; }
+.card .ex { margin-top: 8px; font-size: 0.85rem; }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+th { background: var(--surface-2); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+
+/* Pipeline */
+ol.pipeline { list-style: none; margin: 0; padding: 0; counter-reset: stage -1; }
+ol.pipeline li {
+  counter-increment: stage; position: relative;
+  padding: 0 0 18px 52px;
+}
+ol.pipeline li::before {
+  content: counter(stage); position: absolute; left: 0; top: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+ol.pipeline li::after {
+  content: ""; position: absolute; left: 17px; top: 38px; bottom: 2px;
+  width: 2px; background: var(--border);
+}
+ol.pipeline li:last-child::after { display: none; }
+ol.pipeline h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 6px; }
+ol.pipeline p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+.pill { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.opus { background: var(--opus-soft); color: var(--opus); }
+.pill.sonnet { background: var(--sonnet-soft); color: var(--sonnet); }
+.pill.gate { background: var(--gate-soft); color: var(--gate); }
+.pill.main { background: var(--accent-soft); color: var(--accent); }
+
+.callout { border-left: 4px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; }
+.callout p:last-child { margin: 0; }
+
+/* Spec file stack */
+.stack { display: grid; gap: 6px; margin: 16px 0; }
+.stack div { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 0.95rem; }
+.stack span:last-child { color: var(--muted); font-size: 0.85rem; }
+
+ol.steps { padding-left: 22px; }
+ol.steps li { margin-bottom: 10px; }
+
+dl.glossary { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; }
+dl.glossary dt { font-weight: 600; }
+dl.glossary dd { margin: 0; color: var(--muted); }
+@media (max-width: 520px) {
+  dl.glossary { grid-template-columns: 1fr; gap: 2px; }
+  dl.glossary dd { margin-bottom: 10px; }
+}
+
+td.who { white-space: nowrap; }
+td.who code { overflow-wrap: normal; }
+td.who .pill { margin-top: 4px; }
+
+footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 0.9rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+
+<header class="hero">
+  <p class="eyebrow">Project Starter Kit</p>
+  <h1>Start every project with the thinking already organised.</h1>
+  <p class="lede">A free set of project documents and Claude Code agents for any stack. Every task gets one file. Tests come first. Claude never assumes, and you approve every important step.</p>
+  <div class="buttons">
+    <a class="btn primary" href="https://github.com/Eugenelcc/project-starter-kit">Get the template</a>
+    <a class="btn" href="https://github.com/Eugenelcc/spendlygo">See the worked example</a>
+  </div>
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#why">Why it exists</a></li>
+      <li><a href="#documents">The documents</a></li>
+      <li><a href="#pipeline">The pipeline</a></li>
+      <li><a href="#task-file">One file per task</a></li>
+      <li><a href="#models">Who does what</a></li>
+      <li><a href="#standards">Industry standards</a></li>
+      <li><a href="#start">Start a new project</a></li>
+      <li><a href="#glossary">Glossary</a></li>
+    </ol>
+  </nav>
+</header>
+
+<section id="why">
+  <h2>Why it exists</h2>
+  <p>An AI pair programmer is fast, but it fills gaps with guesses, forgets everything between sessions, and will happily build things nobody asked for. This kit solves that with plain Markdown files:</p>
+  <ul>
+    <li><strong>Written decisions.</strong> What to build, the hard rules, and every task's plan live in files, not in a chat that disappears.</li>
+    <li><strong>Human gates.</strong> The owner approves the requirements, the plan and the merge. Claude never passes a gate alone.</li>
+    <li><strong>Never assume.</strong> When Claude is unsure, it asks: first a plain-language scenario, then the technical detail, then options with pros and cons.</li>
+  </ul>
+  <p>It works for a web app, a bot, an API, anything. The worked example is <a href="https://github.com/Eugenelcc/spendlygo">Spendlygo</a>, a Telegram expense tracker built this way. Every template links to Spendlygo's real, filled-in version.</p>
+</section>
+
+<section id="documents">
+  <h2>The documents and where they live</h2>
+  <div class="cards">
+    <div class="card"><h3>PRD</h3><div class="where"><code>PRD.md</code></div><p><strong>What</strong> to build and <strong>why</strong>. Features get IDs (F1, F2…) that every branch, commit and PR cites. It also lists what's deferred, so scope can't creep.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/PRD.md">Spendlygo's PRD</a></div></div>
+    <div class="card"><h3>Guardrails</h3><div class="where"><code>GUARDRAILS.md</code></div><p>The hard rules, tagged 🔴 NEVER, 🟡 ASK FIRST or 🟢 ALWAYS. They cover cost, data, auth, secrets, privacy, scope, git, the testing floor, and when to stop and ask.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/GUARDRAILS.md">Spendlygo's guardrails</a></div></div>
+    <div class="card"><h3>Design</h3><div class="where"><code>DESIGN.md</code> · optional</div><p>For projects with screens only: colour tokens, type, spacing, motion, components and copy, so every screen stays consistent.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/DESIGN.md">Spendlygo's design system</a></div></div>
+    <div class="card"><h3>CLAUDE.md</h3><div class="where"><code>CLAUDE.md</code> + one per area</div><p>A short operating manual. The root file loads into <em>every</em> session and subagent, so it stays small. Detail for one area goes in a nested <code>CLAUDE.md</code> that loads only when Claude works there.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/CLAUDE.md">Spendlygo's CLAUDE.md</a></div></div>
+    <div class="card"><h3>Workflow</h3><div class="where"><code>WORKFLOW.md</code></div><p>The pipeline, stage by stage. Each stage has its input, output, ✅ success and ❌ failure. Includes the Definition of Ready and Definition of Done.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/WORKFLOW.md">Spendlygo's workflow</a></div></div>
+    <div class="card"><h3>Backlog</h3><div class="where"><code>BACKLOG.md</code></div><p>The single plan, in five lists: Now, Next, Later, Drift &amp; debt, and Done. Every piece of work is a <code>B-###</code> item.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/BACKLOG.md">Spendlygo's backlog</a></div></div>
+    <div class="card"><h3>Task spec file</h3><div class="where"><code>docs/specs/B-###-&lt;slug&gt;.md</code></div><p>One file per task, holding its requirements, plan, tests and review. It's the handoff between agents.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/docs/specs/B-004-settings-command.md">Spendlygo's B-004</a></div></div>
+    <div class="card"><h3>ADRs</h3><div class="where"><code>docs/adr/NNNN-*.md</code></div><p>Why a lasting technical decision was made, and what was rejected. Written once and never rewritten; a later ADR supersedes it.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/blob/main/docs/adr/0002-supabase-instead-of-renders-postgres.md">Spendlygo's ADR 0002</a></div></div>
+    <div class="card"><h3>Runbook</h3><div class="where"><code>RUNBOOK.md</code></div><p>How to deploy, roll back, check health and fix common failures, with exact commands, for when something breaks at 2 a.m.</p></div>
+    <div class="card"><h3>Changelog</h3><div class="where"><code>CHANGELOG.md</code></div><p>What changed in each release, written for users, in the Keep a Changelog format.</p></div>
+    <div class="card"><h3>Postmortems</h3><div class="where"><code>docs/postmortems/</code></div><p>A blameless write-up after an incident: the timeline, the root cause, and actions that prevent it happening again.</p></div>
+    <div class="card"><h3>Agents</h3><div class="where"><code>.claude/agents/*.md</code></div><p>Five Claude Code subagents, one per stage, each pinned to a model and limited to its own tools.</p><div class="ex"><a href="https://github.com/Eugenelcc/spendlygo/tree/main/.claude/agents">Spendlygo's agents</a></div></div>
+  </div>
+</section>
+
+<section id="pipeline">
+  <h2>The pipeline</h2>
+  <p>Every task moves through the same eight stages. <span class="pill gate">✋ owner</span> marks a human gate.</p>
+  <ol class="pipeline">
+    <li><h3>Intake</h3><p>The request becomes a <code>B-###</code> item in the backlog, mapped to exactly one feature ID. If it conflicts with the guardrails, Claude stops and asks.</p></li>
+    <li><h3>Requirements: <em>what</em> <span class="pill gate">✋ owner</span></h3><p>Grilling first: rounds of up to four questions, until nothing material is unclear. Then the acceptance criteria, written as Given / When / Then, plus edge cases and what's out of scope.</p></li>
+    <li><h3>Build plan: <em>how</em> <span class="pill gate">✋ owner</span></h3><p>The files to change, any data changes, which test proves each criterion, the risks and the PR split. Risky items also get an independent second opinion.</p></li>
+    <li><h3>Tests, written first</h3><p>One failing test per acceptance criterion, written before any feature code. A test that passes before the build proves nothing.</p></li>
+    <li><h3>Build</h3><p>Code until the tests pass, following the plan exactly. Never loosen a test to get green; side ideas get parked.</p></li>
+    <li><h3>Review <span class="pill gate">✋ owner merges</span></h3><p>An agent reviews the diff against the spec and guardrails. Then Claude opens the PR, but only when the owner asks, and never merges it.</p></li>
+    <li><h3>Release</h3><p>Deploy and smoke-test using the runbook. If it breaks: revert first, fix second.</p></li>
+    <li><h3>Close</h3><p>Move the item to Done. It's done only when the docs are updated, the high-risk areas are tested, and the change is deployed and checked.</p></li>
+  </ol>
+  <div class="callout">
+    <p><strong>Small-fix lane.</strong> A change of about 30 lines or fewer, with no schema, dependency, API or high-risk change, may skip stages 1 and 2. It still gets tests and review. If in doubt, it isn't a small fix.</p>
+    <p><strong>Two strikes.</strong> After two honest failed attempts at the same problem, Claude stops and reports what failed, what it tried and the options.</p>
+  </div>
+</section>
+
+<section id="task-file">
+  <h2>One file per task</h2>
+  <p>Each task has a single file, <code>docs/specs/B-###-&lt;slug&gt;.md</code>, and every agent writes only its own section:</p>
+  <div class="stack" role="list">
+    <div role="listitem"><span>Grilling recap</span><span>main session, confirmed by owner</span></div>
+    <div role="listitem"><span>Requirements (<em>what</em>)</span><span>spec-planner</span></div>
+    <div role="listitem"><span>Build plan (<em>how</em>)</span><span>spec-planner</span></div>
+    <div role="listitem"><span>Second opinion</span><span>challenger, risky items only</span></div>
+    <div role="listitem"><span>Test report</span><span>test-writer, then builder</span></div>
+    <div role="listitem"><span>Build notes</span><span>builder</span></div>
+    <div role="listitem"><span>Review</span><span>reviewer</span></div>
+  </div>
+  <div class="callout"><p><strong>Why one file?</strong> A subagent starts with no memory of your conversation. It gets only the file's path, reads it, and writes its result back. <strong>Every handoff is a file, never a conversation</strong>, so context survives across agents, sessions and people.</p></div>
+</section>
+
+<section id="models">
+  <h2>Who does what: model routing</h2>
+  <p>Expensive judgement goes to the strongest model; executing a fixed plan goes to a faster one. <strong>Opus thinks, Sonnet does.</strong></p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Who · model</th><th>Job</th></tr></thead>
+    <tbody>
+      <tr><td class="who">Main session<br><span class="pill main">orchestrator</span></td><td>Talks to the owner, grills them, records approvals, launches each agent. The only one who talks to the owner.</td></tr>
+      <tr><td class="who"><code>spec-planner</code><br><span class="pill opus">Opus</span></td><td>Writes the Requirements and Build plan. Never writes code.</td></tr>
+      <tr><td class="who"><code>challenger</code><br><span class="pill opus">Opus</span></td><td>An independent second opinion, written without seeing the conversation. Used for schema changes, money maths, auth, data deletion or a new external service.</td></tr>
+      <tr><td class="who"><code>test-writer</code><br><span class="pill sonnet">Sonnet</span></td><td>Turns acceptance criteria into failing tests.</td></tr>
+      <tr><td class="who"><code>builder</code><br><span class="pill sonnet">Sonnet</span></td><td>Implements the plan until the tests pass. Hands back to the planner if the plan doesn't fit the code.</td></tr>
+      <tr><td class="who"><code>reviewer</code><br><span class="pill opus">Opus</span></td><td>Checks the diff against the spec and guardrails, then gives a verdict: ready for owner, back to build, or back to plan.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted" style="margin-top:12px">Subagents never ask the owner directly. They write their questions into the spec file, and the main session relays them.</p>
+</section>
+
+<section id="standards">
+  <h2>How it maps to industry standards</h2>
+  <p>Nothing here is new. The kit combines well-known practices into a form an AI agent can follow.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Standard</th><th>Where it lives here</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Product Requirements Document (PRD)</strong></td><td><code>PRD.md</code>: the product-level <em>what</em> and <em>why</em></td></tr>
+      <tr><td><strong>User stories</strong> and <strong>Given / When / Then</strong> (from Behaviour-Driven Development, BDD)</td><td>The Requirements section of each spec file</td></tr>
+      <tr><td><strong>Design doc / tech spec / RFC</strong></td><td>The Build plan section of each spec file. Note that "TDD" can mean <em>Technical Design Document</em> <strong>or</strong> <em>Test-Driven Development</em>. This kit uses the plan for the first and stage 3 for the second.</td></tr>
+      <tr><td><strong>Test-Driven Development</strong></td><td>Stage 3: failing tests before any code</td></tr>
+      <tr><td><strong>Test plan</strong></td><td>The Build plan's tests table, plus the Test report</td></tr>
+      <tr><td><strong>Architecture Decision Record (ADR)</strong>, Michael Nygard, 2011</td><td><code>docs/adr/</code></td></tr>
+      <tr><td><strong>Definition of Ready / Definition of Done</strong> (Scrum)</td><td><code>WORKFLOW.md</code>: the gate before tests, and the gate at Close</td></tr>
+      <tr><td><strong>Runbook</strong> and <strong>blameless postmortems</strong> (Google SRE)</td><td><code>RUNBOOK.md</code>, <code>docs/postmortems/</code></td></tr>
+      <tr><td><strong>Keep a Changelog</strong> + <strong>Semantic Versioning</strong></td><td><code>CHANGELOG.md</code></td></tr>
+      <tr><td><strong>Conventional Commits</strong></td><td>Commit messages, e.g. <code>feat(export): F8 add CSV download</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="start">
+  <h2>Start a new project with this kit</h2>
+  <ol class="steps">
+    <li>Open the <a href="https://github.com/Eugenelcc/project-starter-kit">template repository</a>, click <strong>Use this template → Create a new repository</strong>, and name your project.</li>
+    <li>In your new repo, delete <code>site/</code> and <code>.github/workflows/pages.yml</code>. They only publish this page.</li>
+    <li>Replace the README with your own project's.</li>
+    <li>Fill in the documents in this order: <strong>PRD → Guardrails → CLAUDE.md → Design</strong> (if you have screens) <strong>→ Backlog</strong>. Each file starts with a guidance comment and links to Spendlygo's version. Replace every <code>&lt;placeholder&gt;</code>.</li>
+    <li>List your project's <strong>high-risk areas</strong> in Guardrails §8: the places where a bug would be silent and expensive (money, dates, permissions…).</li>
+    <li>Pick your real test and CI commands, put them in one CI script that both you and GitHub Actions run, and put those commands into <code>WORKFLOW.md</code> and the agent files.</li>
+    <li>Add <code>B-001</code> to the backlog. In Claude Code, say: <em>"Let's start B-001. Follow WORKFLOW.md."</em> Then answer the grilling questions and approve each gate.</li>
+  </ol>
+  <p class="muted">The whole kit costs nothing: plain Markdown, Claude Code's built-in subagents, and free GitHub Pages for public repositories.</p>
+</section>
+
+<section id="glossary">
+  <h2>Glossary</h2>
+  <dl class="glossary">
+    <dt>Owner</dt><dd>The human who decides. They approve requirements, plans and merges.</dd>
+    <dt>Grilling</dt><dd>Rounds of short, plain-language questions Claude asks before writing anything, each with options and their pros and cons.</dd>
+    <dt>Acceptance criterion</dt><dd>One testable statement of correct behaviour, in Given / When / Then form.</dd>
+    <dt>Spec file</dt><dd>The single Markdown file per task that every agent reads and writes.</dd>
+    <dt>Subagent</dt><dd>A separate Claude Code worker with its own model, tools and instructions, defined in <code>.claude/agents/</code>.</dd>
+    <dt>Feature ID</dt><dd>F1, F2…: a feature's permanent name in the PRD, cited everywhere.</dd>
+    <dt>B-###</dt><dd>A backlog item's permanent ID. One branch and one spec file per item.</dd>
+    <dt>High-risk areas</dt><dd>The parts of a project where bugs are silent and costly. They never change without tests.</dd>
+    <dt>Small-fix lane</dt><dd>The shortcut for tiny, low-risk changes that skips requirements and planning, but not tests or review.</dd>
+    <dt>Gate ✋</dt><dd>A point where the pipeline waits for the owner's explicit "approved".</dd>
+    <dt>Revert first</dt><dd>When production breaks, restore the last good version before investigating.</dd>
+  </dl>
+</section>
+
+<footer>
+  <p><a href="https://github.com/Eugenelcc/project-starter-kit">Eugenelcc/project-starter-kit</a> · MIT License · Worked example: <a href="https://github.com/Eugenelcc/spendlygo">Spendlygo</a></p>
+</footer>
+
+</main>
+</body>
+</html>
