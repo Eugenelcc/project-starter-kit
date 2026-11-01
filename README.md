@@ -101,7 +101,9 @@ process. The first release is `v0.1.0`.
   Release with generated notes.
 - The workflow refuses a `.kit-version` that doesn't match the tag, a
   pre-release or other non-`vX.Y.Z` tag, and a tag that isn't on `main`.
-- Local dry run: `TAG=v0.1.0 MAIN_REF=main kit/scripts/check-release.sh`.
+- Local dry run, once the tag exists locally (`git tag vX.Y.Z` on the `main`
+  commit, not pushed yet): `TAG=vX.Y.Z MAIN_REF=main kit/scripts/check-release.sh`.
+  Without the local tag it reports "no such tag", which is expected.
 
 ## The kit's own backlog
 

@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Check the tag against .kit-version and main
         env:
           TAG: ${{ github.ref_name }}

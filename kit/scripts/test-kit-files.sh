@@ -20,7 +20,7 @@ README="$(cat README.md)"
 
 # AC13
 n="AC13 README backlog conventions"; miss=""
-for s in '`backlog`' 'status: todo' 'status: spec' 'status: planned' 'status: tests' 'status: in progress' 'status: in review' 'status: done' 'B-###' 'GitHub Issues' 'no Project board' 'gh'; do
+for s in '`backlog`' 'status: todo' 'status: spec' 'status: planned' 'status: tests' 'status: in progress' 'status: in review' 'status: done' 'B-###' 'GitHub Issues' 'no Project board' '`gh`'; do
   has "$README" "$s" || miss="$miss [$s]"
 done
 [ -z "$miss" ] && pass "$n" || fail "$n" "README lacks:$miss"

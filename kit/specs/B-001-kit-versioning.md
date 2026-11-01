@@ -1,6 +1,6 @@
 # B-001 — Kit versioning and the kit's own backlog
 
-**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** built; awaiting review
+**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** in review (PR open)
 <!-- After each approval, Claude adds a line:
      Requirements approved by owner, YYYY-MM-DD
      Build plan approved by owner, YYYY-MM-DD -->
@@ -462,6 +462,8 @@ tag (outside the PR).
 
 - **Deviations from plan:** none
 - **Parked ideas:** a kit CI workflow that runs `bash kit/scripts/test-all.sh` on PRs (tests currently run locally only; see Residual risk).
+
+- **After review (owner chose to fix all three, 2026-11-01):** README dry-run wording clarified; AC13 check tightened to `` `gh` `` (verified it fails without it); `persist-credentials: false` added to `release.yml` checkout. `test-all.sh`: 28 PASS / 0 FAIL.
 
 ---
 
