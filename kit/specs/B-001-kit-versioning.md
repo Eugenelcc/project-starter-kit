@@ -1,6 +1,6 @@
 # B-001 — Kit versioning and the kit's own backlog
 
-**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** in review (PR open)
+**Feature:** n/a (kit work, tracked in [issue #2](https://github.com/Eugenelcc/project-starter-kit/issues/2)) · **Branch:** `feat/B-001-kit-versioning` · **Status:** done (released v0.1.0, 2026-11-01)
 <!-- After each approval, Claude adds a line:
      Requirements approved by owner, YYYY-MM-DD
      Build plan approved by owner, YYYY-MM-DD -->
@@ -428,7 +428,10 @@ tag (outside the PR).
 ## Test report (Stages 3–4)
 
 | AC | Test file › test name | Before build | After build |
-|---|---|---|---|
+|
+**After merge (2026-11-01):** AC10 ✅ release `v0.1.0` exists on `36e4381`, notes generated, not a pre-release, not a draft (owner published it from the GitHub website because this session's proxy blocks tag creation). The tag push then ran `release.yml` live: check step printed `OK: v0.1.0 matches .kit-version and is on origin/main.` and the create step printed `Release v0.1.0 already exists; leaving it unchanged.` (the re-run path, exercised for real), run green. AC11 ✅ `backlog` + all seven `status:` labels exist (created by Claude via `gh`).
+
+---|---|---|---|
 | AC1 | test-kit-files.sh › AC1 kit-version is exactly the v0.1.0 line | ❌ failing (expected) |  ✅ |
 | AC2 | test-release-workflow.py › AC2 triggers only on v* tag pushes | ❌ failing (expected) |  ✅ |
 | AC3 | test-release-workflow.py › AC3 every job has the repo guard | ❌ failing (expected) |  ✅ |
