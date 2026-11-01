@@ -19,9 +19,11 @@ links to Spendlygo's real, filled-in version.
 
 1. Click **Use this template → Create a new repository** at the top of this
    page. Name your project and create it.
-2. In your new repo, **delete** `site/` and `.github/workflows/pages.yml`.
-   They only publish this kit's explainer site. (The workflow is guarded so it
-   won't run in your copy anyway.)
+2. In your new repo, **delete** `site/`, `kit/`, `.github/workflows/pages.yml`
+   and `.github/workflows/release.yml`. They are the kit's explainer site, its
+   own task files and its release workflow; both workflows are guarded so they
+   won't run in your copy anyway. Keep `.kit-version`: it records the kit
+   version your project started from.
 3. Replace this `README.md` with your own project's.
 4. Fill in the documents in this order: **PRD → GUARDRAILS → CLAUDE →
    (DESIGN) → BACKLOG**. Each file starts with a guidance comment; delete it
@@ -43,6 +45,7 @@ links to Spendlygo's real, filled-in version.
 | [`WORKFLOW.md`](./WORKFLOW.md) | The pipeline, stage by stage, with the Definition of Ready and Done | [WORKFLOW.md](https://github.com/Eugenelcc/spendlygo/blob/main/WORKFLOW.md) |
 | [`BACKLOG.md`](./BACKLOG.md) | The single plan: Now / Next / Later / Drift & debt / Done | [BACKLOG.md](https://github.com/Eugenelcc/spendlygo/blob/main/BACKLOG.md) |
 | [`RUNBOOK.md`](./RUNBOOK.md) | Deploy, roll back, health checks, common failures | [apps/server/CLAUDE.md](https://github.com/Eugenelcc/spendlygo/blob/main/apps/server/CLAUDE.md) |
+| [`.kit-version`](./.kit-version) | Which kit release this project was created from. Keep it. | — |
 | [`CHANGELOG.md`](./CHANGELOG.md) | What changed per release (Keep a Changelog + SemVer) | — |
 | [`docs/specs/TEMPLATE.md`](./docs/specs/TEMPLATE.md) | The one file per task: the handoff between agents | [B-004](https://github.com/Eugenelcc/spendlygo/blob/main/docs/specs/B-004-settings-command.md) |
 | [`docs/adr/0000-template.md`](./docs/adr/0000-template.md) | Architecture Decision Record (Nygard format) | [ADR 0002](https://github.com/Eugenelcc/spendlygo/blob/main/docs/adr/0002-supabase-instead-of-renders-postgres.md) |
@@ -82,10 +85,47 @@ links to Spendlygo's real, filled-in version.
 - **After 2 failed attempts, stop and escalate.** Production broken? Revert
   first, fix second. Claude opens PRs only when asked, and never merges.
 
+## Kit versions and releases
+
+The kit uses SemVer, staying on `0.x` while B-002 and B-003 still reshape the
+process. The first release is `v0.1.0`.
+
+- `.kit-version` holds exactly one line, `project-starter-kit vX.Y.Z`.
+  Projects keep it, and can compare it with the
+  [Releases page](https://github.com/Eugenelcc/project-starter-kit/releases)
+  to see what changed since.
+- Release notes live in GitHub Releases. There is no kit changelog file (the
+  root `CHANGELOG.md` is a template for your project).
+- To release: bump `.kit-version` in a PR, merge it, then push the `vX.Y.Z`
+  tag on the `main` commit. `.github/workflows/release.yml` then creates the
+  Release with generated notes.
+- The workflow refuses a `.kit-version` that doesn't match the tag, a
+  pre-release or other non-`vX.Y.Z` tag, and a tag that isn't on `main`.
+- Local dry run, once the tag exists locally (`git tag vX.Y.Z` on the `main`
+  commit, not pushed yet): `TAG=vX.Y.Z MAIN_REF=main kit/scripts/check-release.sh`.
+  Without the local tag it reports "no such tag", which is expected.
+
+## The kit's own backlog
+
+The kit's backlog is GitHub Issues (the root `BACKLOG.md` is a template for
+your project).
+
+- Titles are `B-### <title>`; IDs are never reused.
+- The `backlog` label marks an issue as a `B-###` item.
+- Status is shown by labels, mirroring WORKFLOW §7: `status: todo`,
+  `status: spec`, `status: planned`, `status: tests`, `status: in progress`,
+  `status: in review`, `status: done`. Labels only, no Project board.
+- Claude creates the labels with `gh` when the owner asks.
+- Kit task files live in `kit/specs/B-###-<slug>.md`, the kit's equivalent of
+  `docs/specs/` (same template). Projects delete `kit/` at setup.
+- Kit tests: `bash kit/scripts/test-all.sh`.
+
 ## Cost
 
 Everything here is free: plain Markdown, Claude Code's built-in subagents,
-and GitHub Pages (free for public repos) for the explainer site.
+and GitHub Pages (free for public repos) for the explainer site. The release
+workflow uses GitHub Actions, also free for public repos, with no secrets
+beyond the built-in token.
 
 ## License
 
