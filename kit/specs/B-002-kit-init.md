@@ -135,21 +135,30 @@ Each criterion is proven by exactly one check, marked:
   `bash kit/scripts/test-all.sh`.
 - **Dry run Ax / Bx:** a numbered step of the scripted dry run. Claude runs
   it once, following `/kit-init`, in two throwaway local repos (never
-  pushed) made from a copy of this branch, with `origin` set to a non-kit
-  URL. The owner's answers come from a fixed answer script written in Stage 3.
-  The transcript is shared with the owner. **Repo A** is the full run.
-  **Repo B** is a short run for the "no" paths.
-  - Repo A seed: PRD §1 *Summary* holds owner text. PRD §3 *Target user*
-    holds owner text that contradicts one scripted answer. An untracked file
-    `notes.txt` is present. One answer is ≥ 2,000 characters, in several
+  pushed) made from a copy of this branch. The owner's answers come from a
+  fixed answer script written in Stage 3. The transcript is shared with the
+  owner. **Repo A** is the full run. **Repo B** is a short run for the "no"
+  and "unknown" paths.
+  - Repo A seed: `origin` set to `https://github.com/example/dry-run` (never
+    pushed), on `main`. PRD §1 *Summary* holds owner text. PRD §3 *Target
+    user* holds owner text that contradicts one scripted answer. An untracked
+    file `notes.txt` is present. One answer is ≥ 2,000 characters, in several
     paragraphs. At least two questions are answered "don't know yet". The
-    project has no screens.
-  - Repo B seed: no changes. The project has screens and no tests yet.
+    project has no screens. The CI command answer is `bash scripts/ci.sh`,
+    and that file doesn't exist.
+  - Repo B seed: a git repo with **no remote**, on `main`. The project has
+    screens and no tests yet.
 
 "Skill folder" = `.claude/skills/kit-init/` (`SKILL.md` plus its supporting
 files). "Kit-only paths" = `site/`, `kit/`, `.github/workflows/pages.yml`,
-`.github/workflows/release.yml`. "Progress file" = the file named in
-answer Q1.
+`.github/workflows/release.yml`. "Progress file" =
+`.claude/skills/kit-init/progress.md`. "Setup branch" = `chore/kit-init`.
+"WORKFLOW fill placeholders" = `<Project name>`, `<@github-handle>`,
+`<YYYY-MM-DD>`, the `<How it deploys…>` line (Stage 6), the
+`<Project-specific>` checklist line (§4), `<scripts/ci.sh>`,
+`<test command>` and `<full CI command>`. WORKFLOW's syntax placeholders
+(`<slug>`, `<type>`, `<date>`, `<branch>`, `<backlog-id>`) are not fill
+placeholders and stay.
 
 **A. Skill file is valid** (decision 9, platform facts)
 
@@ -159,106 +168,134 @@ answer Q1.
 | AC2 | `SKILL.md` frontmatter | It is parsed | `disable-model-invocation` is the boolean `true`. *Auto.* |
 | AC3 | `SKILL.md` | Its lines are counted | It has fewer than 500 lines. *Auto.* |
 | AC4 | The skill folder | Every relative Markdown link in every file in it is resolved | Each link points to an existing file inside the skill folder, and every supporting file is linked from `SKILL.md` or from another linked file. *Auto.* |
-| AC5 | `SKILL.md` frontmatter | It is parsed | It has no `allowed-tools` key, so every write and `git rm` goes through the normal permission prompts (platform facts: be conservative). *Auto.* |
+| AC5 | `SKILL.md` frontmatter | It is parsed | It has no `allowed-tools` key, so every write, `git rm` and commit goes through the normal permission prompts (platform facts: be conservative). *Auto.* |
 
-**B. The skill names every file and rule it must follow** (decisions 1–7, 9)
+**B. The skill names every file and rule it must follow** (decisions 1–7, 9; Q1, Q2, Q5–Q7)
 
 | # | Given | When | Then |
 |---|---|---|---|
 | AC6 | The skill folder | It is searched | It names all four kit-only paths, `git rm`, and says they are removed only after an explicit yes (decision 1). *Auto.* |
-| AC7 | The skill folder | It is searched | It names `PRD.md`, `GUARDRAILS.md`, `CLAUDE.md`, `BACKLOG.md`, `B-001`, `DESIGN.md`, `WORKFLOW.md`, `.claude/agents/`, `<test command>` and `<full CI command>`. It says `RUNBOOK.md` and `README.md` are not filled (decision 3). *Auto.* |
+| AC7 | The skill folder | It is searched | It names `PRD.md`, `GUARDRAILS.md`, `CLAUDE.md`, `BACKLOG.md`, `B-001`, `DESIGN.md`, `WORKFLOW.md`, `.claude/agents/`, `<test command>`, `<full CI command>` and `CHANGELOG.md`. It says only `<full CI command>` is replaced in `RUNBOOK.md`, that `README.md` is not filled, that `.kit-version` is not changed, and that no CI script is created (decision 3, Q5–Q7). *Auto.* |
 | AC8 | The skill folder | It is searched | It states the grilling rules: at most 4 questions a round; a plain-language scenario first, then the detail; every option with pros and cons; a marked recommendation. It links to or names WORKFLOW.md's *Grilling* section. *Auto.* |
 | AC9 | The skill folder | It is searched | It states: one recap per file, and a file is written only after the owner confirms that recap (decision 4). It keeps existing text, asks only about the remaining `<placeholders>`, and asks on conflict (decision 5). Unanswered items stay `<placeholders>`, are listed at the end, and no fact is invented (decision 6). *Auto.* |
-| AC10 | The skill folder | It is searched | It names the progress file's exact path, says confirmed answers are saved there as setup goes, says a re-run resumes from it, and says it is deleted at the end (decision 2). *Auto.* |
+| AC10 | The skill folder | It is searched | It names `.claude/skills/kit-init/progress.md`, says confirmed answers are saved there and committed after each confirmed recap, says a re-run resumes from it, and says it is removed at the end (decision 2, Q1). *Auto.* |
 | AC11 | The skill folder | It is searched | Its last step is removing `.claude/skills/kit-init/`, and only after asking (decision 7). *Auto.* |
 | AC12 | The skill folder | It is searched | It contains none of: `git rm -f`, `--force`, `git reset --hard`, `git clean`, `git stash`, `git checkout --`, `git merge`, `git push`. *Auto.* |
+| AC13 | The skill folder | It is searched | It names the branch `chore/kit-init`, says it asks before its first commit, says it never commits to `main`, and says the owner pushes and merges. It explains that the branch name is a one-off exception to `<type>/<B-id>-<slug>`, because setup comes before the backlog exists (Q2). *Auto.* |
 
-**C. Refuses in the kit repo** (decision 8)
+**C. Repo check: kit, fork, no remote** (decision 8, Q3, Q4)
 
-| # | Given | When | Then |
-|---|---|---|---|
-| AC13 | Throwaway git repos with `origin` set to each of `https://github.com/Eugenelcc/project-starter-kit`, the same with `.git`, `git@github.com:Eugenelcc/project-starter-kit.git`, and a different-case `https://github.com/eugenelcc/Project-Starter-Kit` | The skill's repo check (a deterministic script in the skill folder, run with no LLM) runs in each | It exits non-zero every time, its message says this is the kit repo and `/kit-init` is for new projects, and `git status --porcelain` is unchanged afterwards. *Auto (harness).* |
-| AC14 | A throwaway git repo with `origin` set to `https://github.com/example/my-app` | The repo check runs | It exits zero. *Auto (harness).* |
-| AC15 | A throwaway git repo with no remote at all | The repo check runs | Behaves as answer **Q3** decides. *Auto (harness).* |
-| AC16 | A throwaway git repo with `origin` set to a fork, `https://github.com/someone/project-starter-kit` | The repo check runs | Behaves as answer **Q4** decides. *Auto (harness).* |
-| AC17 | `SKILL.md` | Its steps are read in order | Running the repo check is the first step, before cleanup and before any question. It says to stop without changing any file if the check fails. *Auto (the check's mention comes before the first kit-only path and the first file to fill).* |
-
-**D. Behaviour, proven by the dry run** (decisions 1–7)
+The repo check is a deterministic script in the skill folder, run with no
+LLM. It reports one of three results: **refuse**, **ask** or **ok**.
 
 | # | Given | When | Then |
 |---|---|---|---|
-| AC18 | Repo A, untracked `notes.txt` | `/kit-init` starts | Before cleanup it says the working tree isn't clean, names `notes.txt`, and asks whether to continue. At the end `notes.txt` still exists, byte-identical. *Dry run A1.* |
-| AC19 | Repo A | The cleanup step runs | It lists exactly the four kit-only paths and asks. Nothing is removed before the answer. *Dry run A2.* |
-| AC20 | Repo A, the owner answers "yes" to cleanup | The step finishes | `git status` shows the four paths deleted, and nothing else deleted. *Dry run A3.* |
-| AC21 | Repo B, the owner answers "no" to cleanup | Setup continues | All four kit-only paths are still present and unchanged, the skill moves on to `PRD.md`, and the end summary lists them as kept. *Dry run B1.* |
-| AC22 | Repo A, the whole run | Every question round in the transcript is checked | Each round has at most 4 questions. Each question gives a plain-language scenario before detail. Each option has pros and cons. Each question has exactly one marked recommendation. *Dry run A4 (checks the whole transcript).* |
-| AC23 | Repo A | Files are worked on | The order is `PRD.md` → `GUARDRAILS.md` → `CLAUDE.md` → (`DESIGN.md` step) → `BACKLOG.md` → the commands in `WORKFLOW.md` and `.claude/agents/*.md`. *Dry run A5.* |
-| AC24 | Repo A, a file's recap is shown, and the owner corrects one point before confirming | The file is written | The file's hash is unchanged until the confirmation. The written file has the corrected point, not the original one. *Dry run A6.* |
-| AC25 | Repo A, PRD §1 holds owner text | `PRD.md` is filled | §1 is byte-identical to the seed, and no question about §1 was asked. *Dry run A7.* |
-| AC26 | Repo A, PRD §3 holds owner text that contradicts a scripted answer | The answer is given | Before writing, the skill shows both texts and asks which to keep. §3 matches the owner's choice. *Dry run A8.* |
-| AC27 | Repo A, two questions answered "don't know yet" | Those files are written | The matching `<placeholders>` stay verbatim. *Dry run A9.* |
-| AC28 | Repo A, the run is finished | The end summary is compared with `grep -o '<[^>]*>'` over the filled files (`PRD.md`, `GUARDRAILS.md`, `CLAUDE.md`, `BACKLOG.md`, plus `<test command>` / `<full CI command>` in `WORKFLOW.md` and `.claude/agents/*.md`) | The summary lists every remaining placeholder by file, and nothing else. *Dry run A10.* |
-| AC29 | Repo A, the run is finished | The reviewer compares the diff of every filled file with the answer script and the seed | Every added or changed line comes from an answer, the seed, or the template. No fact is invented. *Dry run A11.* |
-| AC30 | Repo A, one answer is ≥ 2,000 characters, in several paragraphs | It is saved and written | The progress file holds it in full, and the recap shows exactly the text that ends up in the file (no silent truncation). *Dry run A12.* |
-| AC31 | Repo A, the owner confirms the BACKLOG recap | `BACKLOG.md` is written | *Now* has a `B-001` row and paragraph with the title, feature ID and accept line from the answers. *Dry run A13.* |
-| AC32 | Repo A, the project has no screens | The `DESIGN.md` step runs | It offers to delete `DESIGN.md` and asks. On "yes", `git status` shows `DESIGN.md` deleted. *Dry run A14.* |
-| AC33 | Repo B, the project has screens | The `DESIGN.md` step runs | `DESIGN.md` is filled after its recap is confirmed, and not deleted. *Dry run B2.* |
-| AC34 | Repo A, the owner gives a test command and a full CI command | That step finishes | `WORKFLOW.md` and `.claude/agents/*.md` contain no `<test command>` or `<full CI command>`, and their diff changes only those placeholders. *Dry run A15.* |
-| AC35 | Repo B, the owner says there are no tests yet | That step finishes | `<test command>` stays verbatim in `WORKFLOW.md` and `test-writer.md`, and the end summary lists it. *Dry run B3.* |
-| AC36 | Repo A, the first file recap is confirmed | The progress file is inspected | It exists at the path from Q1, holds the confirmed answers, and records the `.kit-version` line. *Dry run A16.* |
-| AC37 | Repo A, `GUARDRAILS.md` is confirmed, and the run is stopped | A fresh session (no memory of the first) runs `/kit-init` | It says it's resuming from the progress file, asks none of the questions already confirmed, and continues with `CLAUDE.md`. *Dry run A17.* |
-| AC38 | Repo B, a progress file whose recorded kit version differs from `.kit-version` | `/kit-init` runs | It names both versions and asks whether to continue or start over, before asking anything else. *Dry run B4.* |
-| AC39 | Repo A, the last file is written | Self-removal is offered and the owner says "yes" | It was the last question. Afterwards the progress file and `.claude/skills/kit-init/` are both gone. *Dry run A18.* |
-| AC40 | Repo A, the run is finished | `RUNBOOK.md`, `README.md` and `.kit-version` are compared with the seed | They are byte-identical. *Dry run A19.* |
+| AC14 | Throwaway git repos with `origin` set to each of `https://github.com/Eugenelcc/project-starter-kit`, the same with `.git`, `git@github.com:Eugenelcc/project-starter-kit.git`, and a different-case `https://github.com/eugenelcc/Project-Starter-Kit` | The repo check runs in each | It reports **refuse** every time, its message says this is the kit repo and `/kit-init` is for new projects, and `git status --porcelain` is unchanged afterwards. *Auto (harness).* |
+| AC15 | A throwaway git repo with `origin` set to `https://github.com/example/my-app` | The repo check runs | It reports **ok**. *Auto (harness).* |
+| AC16 | A throwaway git repo with no remote, and a throwaway folder that isn't a git repo | The repo check runs in each | It reports **ask**, with the question "Is this a new project, not the kit itself?", and changes nothing. *Auto (harness).* |
+| AC17 | Throwaway git repos with `origin` set to `https://github.com/someone/project-starter-kit` and `git@github.com:someone/project-starter-kit.git` | The repo check runs in each | It reports **ask**, with a warning that the repo is named `project-starter-kit` and may be a fork of the kit, and a yes/no question about continuing. *Auto (harness).* |
+| AC18 | `SKILL.md` | Its steps are read in order | Running the repo check is the first step, before cleanup and before any other question. It says: on **refuse**, stop without changing any file; on **ask**, ask the check's question once and continue only on an explicit yes. *Auto (the check's mention comes before the first kit-only path and the first file to fill, and the refuse/ask rules are stated).* |
+| AC19 | Repo B (no remote) | `/kit-init` starts | It asks "Is this a new project, not the kit itself?" once, before anything else, and continues only after the scripted "yes". *Dry run B1.* |
 
-**E. Docs and existing checks** (decision 10)
+**D. Behaviour, proven by the dry run** (decisions 1–7, Q1, Q2, Q5–Q7)
 
 | # | Given | When | Then |
 |---|---|---|---|
-| AC41 | README "Start a new project with it" | It is read | It recommends running `/kit-init` before the manual steps. The manual steps stay as the alternative and still name the four kit-only paths. *Auto (grep and order).* |
-| AC42 | README "What's inside" | It is read | A row names `.claude/skills/kit-init/` and says it removes itself at the end of setup. *Auto (grep).* |
-| AC43 | `site/index.html` "From template to first task" | It is read | It recommends `/kit-init` before the manual steps, and the manual delete step still names the four paths. *Auto (grep and order).* |
-| AC44 | `site/playground.html` setup tab | It renders | It shows `/kit-init` as the recommended start, and the manual checklist, files table and `git rm` line are still there. *Auto (Playwright, in `test-site.cjs`).* |
-| AC45 | The branch | `bash kit/scripts/test-all.sh` runs | It exits zero, includes the new checks, and the existing B-001 checks (AC1, AC13–AC20 of B-001) still assert at least what they asserted before. *Auto.* |
-| AC46 | The branch vs `main` | The diff of the root templates (`PRD.md`, `GUARDRAILS.md`, `CLAUDE.md`, `BACKLOG.md`, `DESIGN.md`, `WORKFLOW.md`, `RUNBOOK.md`, `CHANGELOG.md`, `.claude/agents/`, `docs/`) is taken | It is empty. In the kit repo, they stay templates. *Auto.* |
+| AC20 | Repo A, untracked `notes.txt` | `/kit-init` starts | Before cleanup it says the working tree isn't clean, names `notes.txt`, and asks whether to continue. At the end `notes.txt` still exists, byte-identical, untracked and in no commit. *Dry run A1.* |
+| AC21 | Repo A | The cleanup step runs | It lists exactly the four kit-only paths and asks. Nothing is removed before the answer. *Dry run A2.* |
+| AC22 | Repo A, the owner answers "yes" to cleanup | The run is finished | The four paths are absent from the tip of `chore/kit-init`, and no other path was deleted. *Dry run A3.* |
+| AC23 | Repo B, the owner answers "no" to cleanup | Setup continues | All four kit-only paths are still present and unchanged, the skill moves on to `PRD.md`, and the end summary lists them as kept. *Dry run B2.* |
+| AC24 | Repo A, the first file recap is confirmed | The first commit is about to happen | The skill asks before committing, names `chore/kit-init`, and only after the scripted "yes" creates that branch and commits there. *Dry run A4.* |
+| AC25 | Repo A, the run is finished | The branches are inspected | `main` points to the same commit as in the seed. Each confirmed file (and the cleanup) has a commit on `chore/kit-init`. Nothing was pushed. *Dry run A5.* |
+| AC26 | Repo A, the whole run | Every question round in the transcript is checked | Each round has at most 4 questions. Each question gives a plain-language scenario before detail. Each option has pros and cons. Each question has exactly one marked recommendation. *Dry run A6 (checks the whole transcript).* |
+| AC27 | Repo A | Files are worked on | `PRD.md` → `GUARDRAILS.md` → `CLAUDE.md` → (`DESIGN.md` step) → `BACKLOG.md` come first, in that order, before the WORKFLOW, agents, RUNBOOK and CHANGELOG steps. Self-removal is last. *Dry run A7.* |
+| AC28 | Repo A, a file's recap is shown, and the owner corrects one point before confirming | The file is written | The file's hash is unchanged until the confirmation. The written file has the corrected point, not the original one. *Dry run A8.* |
+| AC29 | Repo A, PRD §1 holds owner text | `PRD.md` is filled | §1 is byte-identical to the seed, and no question about §1 was asked. *Dry run A9.* |
+| AC30 | Repo A, PRD §3 holds owner text that contradicts a scripted answer | The answer is given | Before writing, the skill shows both texts and asks which to keep. §3 matches the owner's choice. *Dry run A10.* |
+| AC31 | Repo A, two questions answered "don't know yet" | Those files are written | The matching `<placeholders>` stay verbatim. *Dry run A11.* |
+| AC32 | Repo A, the run is finished | The end summary is compared with `grep -o '<[^>]*>'` over `PRD.md`, `GUARDRAILS.md`, `CLAUDE.md`, `BACKLOG.md`, the WORKFLOW fill placeholders in `WORKFLOW.md`, and `<test command>` / `<full CI command>` in `.claude/agents/*.md` and `RUNBOOK.md` | The summary lists every remaining placeholder by file, and nothing else. *Dry run A12.* |
+| AC33 | Repo A, the run is finished | The reviewer compares the diff of every filled file with the answer script and the seed | Every added or changed line comes from an answer, the seed, the template, or today's date. No fact is invented. *Dry run A13.* |
+| AC34 | Repo A, one answer is ≥ 2,000 characters, in several paragraphs | It is saved and written | The progress file holds it in full, and the recap shows exactly the text that ends up in the file (no silent truncation). *Dry run A14.* |
+| AC35 | Repo A, the owner confirms the BACKLOG recap | `BACKLOG.md` is written | *Now* has a `B-001` row and paragraph with the title, feature ID and accept line from the answers. *Dry run A15.* |
+| AC36 | Repo A, the project has no screens | The `DESIGN.md` step runs | It offers to delete `DESIGN.md` and asks. On "yes", `DESIGN.md` is absent from the tip of `chore/kit-init`. *Dry run A16.* |
+| AC37 | Repo B, the project has screens | The `DESIGN.md` step runs | `DESIGN.md` is filled after its recap is confirmed, and not deleted. *Dry run B3.* |
+| AC38 | Repo A, the WORKFLOW step | Its recap is shown and confirmed | Project name, GitHub handle, today's date and the CI script path (`scripts/ci.sh`) are reused from earlier answers without being asked again. The deploy line and the project-specific checklist line are asked. WORKFLOW gets its own recap before it is written. *Dry run A17.* |
+| AC39 | Repo A, WORKFLOW and agents are written | `git diff` against the seed is taken for `WORKFLOW.md` and `.claude/agents/*.md` | In `WORKFLOW.md` only WORKFLOW fill placeholders changed, and no answered one remains. In the agents only `<test command>` / `<full CI command>` changed, and neither remains. *Dry run A18.* |
+| AC40 | Repo A, the run is finished | `git diff` against the seed is taken for `RUNBOOK.md` | The only change is `<full CI command>` replaced by the given command. Every other RUNBOOK placeholder is untouched. *Dry run A19.* |
+| AC41 | Repo A, the CHANGELOG step | The owner answers "yes" to the reset question | No content questions were asked. `CHANGELOG.md` keeps its title, intro and format lines, has no guidance comment, no `[0.1.0]` entry and no `<placeholder>`, and ends with an empty `## [Unreleased]` section. *Dry run A20.* |
+| AC42 | Repo A, the CI command is `bash scripts/ci.sh`, and the file doesn't exist | The run is finished | `scripts/ci.sh` was not created, and the end summary lists "create `scripts/ci.sh`". *Dry run A21.* |
+| AC43 | Repo B, the owner says there are no tests yet | That step finishes | `<test command>` stays verbatim in `WORKFLOW.md` and `test-writer.md`, and the end summary lists it. *Dry run B4.* |
+| AC44 | Repo A, the first file recap is confirmed | The progress file is inspected | `.claude/skills/kit-init/progress.md` holds the confirmed answers and the `.kit-version` line, and is included in that recap's commit on `chore/kit-init`. *Dry run A22.* |
+| AC45 | Repo A, `GUARDRAILS.md` is confirmed, and the run is stopped | A fresh session (no memory of the first) runs `/kit-init` on `chore/kit-init` | It says it's resuming from the progress file, asks none of the questions already confirmed, and continues with `CLAUDE.md`. *Dry run A23.* |
+| AC46 | Repo B, a progress file whose recorded kit version differs from `.kit-version` | `/kit-init` runs | It names both versions and asks whether to continue or start over, before any setup question. *Dry run B5.* |
+| AC47 | Repo A, all files are written | Self-removal is offered and the owner says "yes" | It was the last question. `.claude/skills/kit-init/` (with `progress.md`) is absent from the tip of `chore/kit-init`. *Dry run A24.* |
+| AC48 | Repo A, the run is finished | `README.md` and `.kit-version` are compared with the seed | Both are byte-identical. *Dry run A25.* |
+
+**E. Docs and existing checks** (decision 10, Q8, Q9)
+
+| # | Given | When | Then |
+|---|---|---|---|
+| AC49 | README "Start a new project with it" | It is read | It recommends running `/kit-init` before the manual steps. The manual steps stay as the alternative and still name the four kit-only paths. *Auto (grep and order).* |
+| AC50 | README manual steps | They are read | They say deleting `.claude/skills/kit-init/` is optional, if you won't use `/kit-init`. The required delete list doesn't include it. *Auto (grep).* |
+| AC51 | README "What's inside" | It is read | A row names `.claude/skills/kit-init/` and says it removes itself at the end of setup. *Auto (grep).* |
+| AC52 | `site/index.html` "From template to first task" | It is read | It recommends `/kit-init` before the manual steps. The manual delete step still names the four paths and calls deleting `.claude/skills/kit-init/` optional, if you won't use `/kit-init`. *Auto (grep and order).* |
+| AC53 | `site/playground.html` setup tab, screens on and off | It renders | It shows `/kit-init` as the recommended start. The manual checklist, files table and `git rm` line are still there. The page says deleting `.claude/skills/kit-init/` is optional, and the `git rm` line does not include it. *Auto (Playwright, in `test-site.cjs`).* |
+| AC54 | The branch | `bash kit/scripts/test-all.sh` runs | It exits zero, includes the new checks, and the existing B-001 checks (AC1, AC13–AC20 of B-001) still assert at least what they asserted before. *Auto.* |
+| AC55 | The branch | `.kit-version` is read | It is still exactly `project-starter-kit v0.1.0`. The bump to `v0.2.0` is a separate release PR after merge (Q9). *Auto (the existing B-001 AC1 check, unchanged).* |
+| AC56 | The branch vs `main` | The diff of the root templates (`PRD.md`, `GUARDRAILS.md`, `CLAUDE.md`, `BACKLOG.md`, `DESIGN.md`, `WORKFLOW.md`, `RUNBOOK.md`, `CHANGELOG.md`, `.claude/agents/`, `docs/`) is taken | It is empty. In the kit repo, they stay templates. *Auto.* |
 
 ### Edge cases
-- **No git remote, or not a git repo at all** (e.g. a downloaded zip): see
-  Q3. `git rm` needs a repo, so cleanup can't run without one.
-- **Fork of the kit** (`someone/project-starter-kit`): see Q4.
+- **No git remote, or not a git repo at all** (e.g. a downloaded zip): asks
+  "Is this a new project, not the kit itself?" once, and continues only on
+  yes (AC16, AC19). With no git repo, `git rm` and commits can't run. The
+  skill says so and asks the owner to run `git init` first (Q11).
+- **Fork, or any other repo named `project-starter-kit`:** warns and asks
+  yes/no (AC17). `Eugenelcc/project-starter-kit` in any URL form is always
+  refused (AC14).
 - **Dirty working tree:** the skill names the changed and untracked files,
-  then asks (AC18). It never stashes, resets, cleans or forces a removal
-  (AC12). If `git rm` refuses because a kit-only file has local edits, the
-  skill shows the real message and asks. It never adds `-f`.
+  then asks (AC20). It never stashes, resets, cleans or forces a removal
+  (AC12), and commits only the files it wrote. If `git rm` refuses because a
+  kit-only file has local edits, the skill shows the real message and asks.
+  It never adds `-f`.
 - **Some kit-only paths already deleted by hand:** it lists only the ones
   still present. If none are present, it skips the question.
 - **Owner says no to cleanup:** nothing is removed, setup continues, and the
-  end summary lists the kept files (AC21).
-- **Owner says no to self-removal:** the skill folder stays, and the end
-  summary says how to remove it. Running `/kit-init` again later (no progress
-  file) starts again. By decision 5 it keeps everything already written and
-  asks only about the `<placeholders>` left.
+  end summary lists the kept files (AC23).
+- **Owner says no to the first-commit question:** see Q10.
+- **`chore/kit-init` already exists** (a resumed run): the skill uses it and
+  never creates a second setup branch.
+- **Owner says no to self-removal:** the skill folder stays, and
+  `progress.md` is still removed (decision 2) and that removal committed.
+  The end summary says how to remove the folder. A later `/kit-init` (no
+  progress file) starts again. By decision 5 it keeps everything already
+  written and asks only about the `<placeholders>` left.
+- **Owner says no to the CHANGELOG reset:** `CHANGELOG.md` is unchanged, and
+  the end summary lists it as still a template.
 - **Progress file from a different kit version:** it names both versions and
-  asks (AC38).
+  asks (AC46).
 - **Progress file present but unreadable or hand-edited into nonsense:** it
   says so, shows what it could read, and asks whether to start over. It
   never guesses the missing answers.
-- **Resuming in a different session or on a different machine:** works only
-  if that session can see the progress file (Q1 decides whether it is
-  committed). The resumed session re-reads the files already written and
-  doesn't rely on chat memory (AC37).
+- **Resuming in a different session or on a different machine:** works when
+  the owner has pushed `chore/kit-init` and the session is on that branch.
+  The resumed session re-reads the files already written and doesn't rely on
+  chat memory (AC45). A session that starts on `main` sees no progress file
+  (Q11).
 - **Owner edits a filled file by hand between sessions:** on resume, the
   skill treats it as existing text (decision 5). It keeps the edit and asks
   if it conflicts with a saved answer.
 - **No tests yet, so no test command:** `<test command>` stays and is listed
-  (AC35). The same applies to `<full CI command>`. See Q7 for the CI script.
+  (AC43). The same applies to `<full CI command>`, in WORKFLOW, the agents
+  and RUNBOOK.
+- **CI script path given but the file doesn't exist:** not created; listed
+  as "create `<path>`" in the end summary (AC42).
 - **No screens, `DESIGN.md` deleted, and screens added later:** the deletion
-  was a `git rm`, so the file comes back from git history or the kit
-  template. `/kit-init` doesn't track it later. If the PRD answers mention
-  screens but the owner says "no screens", that's a conflict, and the skill
-  asks (decision 5).
+  was a committed `git rm`, so the file comes back from git history or the
+  kit template. `/kit-init` doesn't track it later. If the PRD answers
+  mention screens but the owner says "no screens", that's a conflict, and the
+  skill asks (decision 5).
 - **Very long answers:** stored and written in full, never truncated. The
-  recap shows exactly what will be written (AC30).
+  recap shows exactly what will be written (AC34).
 - **Owner answers more than was asked, or answers a later file's question
   early:** the answer is saved for that later file and shown again in that
   file's recap. It is not written early (decision 4).
@@ -272,148 +309,79 @@ answer Q1.
 ### Out of scope
 - Stack presets (parked).
 - Kit sync, i.e. pulling kit updates into existing projects (parked).
-- Filling `RUNBOOK.md` or `README.md` (decision 3).
+- Filling `README.md`, or any `RUNBOOK.md` placeholder other than
+  `<full CI command>` (decision 3, Q6).
+- Creating the CI script or any other code (Q7).
+- Content questions for `CHANGELOG.md` (Q5: reset only).
 - Running the dry run in CI, or any paid or LLM API in an automated check
   (decision 9).
-- Pushing, opening PRs or merging from `/kit-init`.
-- Changing the root templates in the kit repo (AC46).
-- Tagging or publishing `v0.2.0` (the owner does it after merge; see Q9 for
-  the `.kit-version` bump).
+- Pushing, opening PRs, merging, or committing to `main` from `/kit-init`
+  (Q2).
+- Changing the root templates in the kit repo (AC56).
+- Bumping `.kit-version`, tagging or publishing `v0.2.0`. That's a separate
+  release PR after merge, then the owner's tag (Q9).
 
 ### Open questions for the owner
-Each needs an answer before approval. No default is chosen.
+Q1–Q9 are answered by the owner (2026-11-01):
+- **Q1 → C.** The progress file is `.claude/skills/kit-init/progress.md`.
+  It is committed after each confirmed recap and removed with the skill
+  folder.
+- **Q2 → B.** `/kit-init` asks before its first commit, then commits each
+  confirmed file on `chore/kit-init`. That name is a documented one-off
+  exception to `<type>/<B-id>-<slug>`, because setup comes before the
+  backlog. The owner pushes and merges. It never commits to `main`.
+- **Q3 → A.** With no remote, or no git, it asks once "Is this a new
+  project, not the kit itself?" and continues only on yes.
+- **Q4 → C.** It always refuses `Eugenelcc/project-starter-kit`, in any URL
+  form. For any other repo named `project-starter-kit`, it warns and asks
+  yes/no.
+- **Q5 → B.** After asking, it resets `CHANGELOG.md` to an empty
+  `[Unreleased]` section, with no content questions. `.kit-version` stays
+  unchanged.
+- **Q6 → C.** It fills WORKFLOW's other placeholders, reusing answers it
+  already has and asking about the deploy line and the project-specific
+  line, with a WORKFLOW recap. In `RUNBOOK.md` it replaces only
+  `<full CI command>`.
+- **Q7 → A.** It does not create the CI script. The end summary lists
+  "create `<script path>`".
+- **Q8 → C.** The manual steps (README, site, playground) say deleting
+  `.claude/skills/kit-init/` is optional, if you won't use `/kit-init`. It is
+  not added to the `git rm` line.
+- **Q9 → B.** `.kit-version` stays `v0.1.0` in B-002. A separate small
+  release PR bumps it after merge.
 
-**Q1. Where does the progress file live, and is it committed?**
-*Scenario:* you answer the PRD questions on your laptop, stop, and later
-open a Claude Code cloud session on your phone. That session starts from a
-fresh copy of the repo on GitHub, so it only sees what was pushed.
-- **A. `.kit-init-progress.md` at the repo root, committed after each
-  confirmed recap.** Pros: resuming works across machines and cloud
-  sessions, and it's easy to see. Cons: your answers go into git history.
-  In a public repo that's public, even after the file is deleted. It also
-  depends on Q2 (commits).
-- **B. Inside the skill folder (`.claude/skills/kit-init/progress.md`), not
-  committed (git-ignored).** Pros: no history noise, nothing public, and it
-  goes away with the skill. Cons: resume works only on the same machine and
-  copy, so it fails for the phone and cloud case.
-- **C. Inside the skill folder, committed.** Pros: resumes anywhere, and it's
-  removed together with the skill. Cons: the same public-history concern as
-  A, and it's harder to spot.
+Two gaps follow from the Q2 answer and are still open:
 
-**Q2. Does `/kit-init` make commits, and on which branch?**
-*Scenario:* a brand-new repo has only `main`. Your GUARDRAILS template says
-"never commit directly to `main`", but there's no task branch yet.
-- **A. Never commits.** It leaves everything staged for you to review and
-  commit. Pros: you stay fully in control, and no rule is bent. Cons:
-  nothing reaches GitHub until you commit and push, so phone and cloud
-  resume (Q1 A/C) don't work. Harder on mobile.
-- **B. Commits each confirmed file on a setup branch** (e.g.
-  `chore/kit-init`) and asks before the first commit. You push and merge.
-  Pros: you can review the history, and it follows the branch rule. Cons:
-  the branch name has no `B-###` ID, so it breaks the `<type>/<B-id>-<slug>`
-  pattern, and there's a merge step.
-- **C. Commits each confirmed file directly on `main`**, as a one-off setup
-  exception, after asking once. Pros: simplest, and resume works after a
-  push. Cons: breaks the template's own rule on day one.
+**Q10. What happens if you say "no" to the first-commit question?**
+*Scenario:* `/kit-init` has written `PRD.md` and asks "May I commit this on
+a new branch `chore/kit-init`?". You say no, because you'd rather commit
+yourself.
+- **A. Continue without ever committing.** Files stay uncommitted, and the
+  skill warns that resuming from another session or machine won't work.
+  Pros: you stay in control, with no nagging. Cons: no cross-session resume,
+  and everything sits on `main`'s working tree for you to branch and commit.
+- **B. Ask again before each later commit.** Pros: you can change your mind
+  part-way. Cons: a repeated question every file.
+- **C. Stop setup until you agree to commit.** Pros: keeps the Q1 and Q2
+  design intact. Cons: blocks owners who want to commit by hand.
 
-**Q3. With no git remote (or no git repo at all), how does it tell this
-isn't the kit repo?**
-*Scenario:* you download the kit as a zip, unpack it, and run `/kit-init`.
-There's no `origin`, so the URL check has nothing to look at, and the files
-look exactly like the kit's.
-- **A. Ask you once:** "Is this a new project, not the kit itself?"
-  Continue only on yes. Pros: works for zip and local-only starts. Cons:
-  relies on your answer, so the kit owner could slip past it by mistake.
-- **B. Refuse until a remote is set** (and `git init` is done). Pros:
-  simplest and safest. Cons: zip and offline users must create a remote
-  first, which adds friction.
-- **C. Continue silently.** Pros: no friction. Cons: no protection at all
-  without a remote.
-
-**Q4. Should a fork of the kit (any `<owner>/project-starter-kit`) also be
-refused?**
-*Scenario:* someone forks the kit to propose an improvement and types
-`/kit-init` to try it. Their remote is `someone/project-starter-kit`, not
-`Eugenelcc/...`.
-- **A. Refuse only `Eugenelcc/project-starter-kit`** (as the recap says).
-  Pros: exact and predictable. Cons: a contributor's fork gets its templates
-  filled in, and a PR from it could carry them back.
-- **B. Also refuse any repo named `project-starter-kit`.** Pros: protects
-  forks. Cons: someone who names their own project `project-starter-kit` is
-  blocked. It needs a clear message saying to rename the repo.
-- **C. Like A, but warn and ask on a repo named `project-starter-kit`.**
-  Pros: protects forks without blocking anyone. Cons: one more question,
-  and it relies on the answer.
-
-**Q5. What happens to `CHANGELOG.md` in the new project?**
-*Scenario:* after setup, your `CHANGELOG.md` still has the template's
-guidance and a sample entry, `## [0.1.0] - YYYY-MM-DD … First deployable
-skeleton (B-001)`, which isn't true for your project. (`.kit-version` is
-kept unchanged either way, as the README already says.)
-- **A. Leave it as a template** (the recap lists only the files it fills).
-  Pros: stays inside the recap, and there's less to ask. Cons: a misleading
-  sample entry stays until you notice it.
-- **B. Reset it to an empty `[Unreleased]` section after asking** (remove
-  the guidance and the sample entry). No questions about content. Pros:
-  clean and true, and one yes/no. Cons: a small addition to the recap's
-  file list.
-- **C. Leave it, but list it in the end summary as "still a template".**
-  Pros: no change, and you're reminded. Cons: you still have to fix it by
-  hand.
-
-**Q6. Beyond `<test command>` / `<full CI command>`, does it fill
-`WORKFLOW.md`'s other placeholders?**
-*Scenario:* after setup, `WORKFLOW.md` still says `# <Project name> —
-Workflow`, "Agreed with the owner (<@github-handle>) on <YYYY-MM-DD>", the
-deploy line `<How it deploys…>`, the review line `<Project-specific>`, and
-`<scripts/ci.sh>`. `RUNBOOK.md` also keeps `<full CI command>`, even though
-you've just given it.
-- **A. Only the two command placeholders** (the recap read literally). The
-  rest are listed at the end. Pros: stays inside the recap. Cons: an
-  obviously half-filled WORKFLOW, with answers you already gave (name,
-  handle) not reused.
-- **B. Also fill WORKFLOW's other placeholders**, reusing earlier answers
-  (name, handle, today's date, CI script path) and asking about the deploy
-  and project-specific lines, with a WORKFLOW recap. Pros: a complete file.
-  Cons: more questions, and it widens decision 3.
-- **C. B, plus replace only `<full CI command>` in `RUNBOOK.md`** (the rest
-  of RUNBOOK stays a template). Pros: no stale command anywhere. Cons:
-  touches a file the recap said stays a template.
-
-**Q7. Does `/kit-init` create the CI script (e.g. `scripts/ci.sh`)?**
-*Scenario:* README step 5 says "create the single CI script that both you
-and GitHub Actions run". You tell `/kit-init` your CI command is
-`bash scripts/ci.sh`, but that file doesn't exist.
-- **A. No.** It records the command and lists "create `scripts/ci.sh`" as a
-  next step. Pros: no code written, and it stays stack-neutral (stack
-  presets are out of scope). Cons: setup isn't finished when `/kit-init`
-  ends.
-- **B. Yes, a minimal script built from the commands you give**, after its
-  own recap. Pros: works on day one. Cons: writes code, edges into stack
-  presets, and needs its own checks.
-
-**Q8. Should the manual setup steps also delete `.claude/skills/kit-init/`?**
-*Scenario:* you skip `/kit-init` and follow the manual steps. The skill
-folder stays in your project forever, unused (it never loads by itself,
-because of `disable-model-invocation`).
-- **A. Yes, add it to the manual delete list** (README, site, playground
-  table and `git rm` line). Pros: a clean project. Cons: a longer list, and
-  you lose the option to run `/kit-init` later.
-- **B. No, leave it.** Pros: you can still run `/kit-init` later, and the
-  list stays short. Cons: a leftover folder in projects set up by hand.
-- **C. Mention it as optional** ("delete it if you won't use `/kit-init`").
-  Pros: you decide. Cons: one more thing to read.
-
-**Q9. Is `.kit-version` bumped to `v0.2.0` in the B-002 PR, or in a separate
-PR after merge?**
-*Scenario:* the recap says B-002 releases as `v0.2.0`. The B-001 check
-expects `.kit-version` to be exactly `project-starter-kit v0.1.0`.
-- **A. In the B-002 PR**, updating that check to `v0.2.0`. Pros: one PR, and
-  you tag right after merge. Cons: `main` claims `v0.2.0` before the tag
-  exists, and the PR mixes feature and release.
-- **B. A separate small release PR after B-002 merges** (the README's
-  "bump in a PR, merge, tag" flow). Pros: clean separation, matching how
-  v0.1.0 was done. Cons: one more PR.
+**Q11. Resuming when a session starts on `main`, and starting with no git
+repo.**
+*Scenario 1:* you pushed `chore/kit-init` from your laptop. Your phone's
+cloud session opens on `main`, where there's no progress file, so
+`/kit-init` would start from scratch. *Scenario 2:* you unpacked a zip with
+no `.git` at all, answered "yes, it's a new project", and now cleanup needs
+`git rm`.
+- **A. Detect and ask.** If `chore/kit-init` exists locally or on `origin`,
+  the skill says so and asks to switch to it. With no git repo, it asks to
+  run `git init` and stops until that's done. Pros: resume just works, and
+  there's no silent fresh start. Cons: two more checks in the skill.
+- **B. Document only.** The end-of-round message says "resume on
+  `chore/kit-init`". With no git repo, it stops and says to run `git init`.
+  Pros: simpler skill. Cons: easy to start over by mistake on `main`.
+- **C. Detect the branch (as A); with no git repo, offer to run `git init`
+  itself after asking.** Pros: smoothest. Cons: the skill creates a repo,
+  which is a bigger action to take on your behalf.
 
 ---
 
